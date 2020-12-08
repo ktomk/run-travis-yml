@@ -1,0 +1,37 @@
+name: C/I
+
+on: push
+
+jobs:
+
+  ubuntu1604:
+    runs-on: ubuntu-16.04
+    steps:
+      - uses: actions/checkout@v2
+
+      # Run action itself on test .travis.yml file
+      - uses: ./.
+        with:
+          file: test/.travis.yml
+
+
+  ubuntu1804:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+
+      # Run action itself on test .travis.yml file
+      - uses: ./.
+        with:
+          file: test/.travis.yml
+
+
+  ubuntu2004:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      # Run action itself on test .travis.yml file
+      - uses: ./.
+        with:
+          file: test/.travis.yml
