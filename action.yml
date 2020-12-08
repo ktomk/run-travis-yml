@@ -1,0 +1,51 @@
+---
+name: run .travis.yml
+author: infer from git revision of this file ~~~ktomk
+description: Run `.travis.yml` Stages/Scripts from Travis-CI as Github Action
+
+branding:
+  color: yellow
+  icon: shuffle
+
+inputs:
+  file:
+    description: 'path to .travis.yml'
+    default: '.travis.yml'
+    required: false
+  stages:
+    description: 'space separated list of stages to run'
+    default: ''
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        INPUT_STAGES: ${{ inputs.stages }}
+        INPUT_FILE: ${{ inputs.file }}
+      run: |
+        TRAVIS_BRANCH="${TRAVIS_BRANCH:-${{ github.head_ref }}}"
+        # TRAVIS_BUILD_ID
+        # TRAVIS_BUILD_NUMBER
+        # TRAVIS_COMMIT
+        # TRAVIS_COMMIT_RANGE
+        TRAVIS_EVENT_TYPE="$(if [[ "schedule" = "${{ github.event_name }}" ]]; then echo "cron"; else echo "${{ github.event_name }}"; fi)"
+        # TRAVIS_JOB_ID
+        TRAVIS_PULL_REQUEST="${TRAVIS_PULL_REQUEST:-${{ github.event.number }}}"
+        TRAVIS_REPO_SLUG="${TRAVIS_REPO_SLUG:-${{ github.repository }}}"
+        CI="${CI:-true}"
+        HAS_JOSH_K_SEAL_OF_APPROVAL="${HAS_JOSH_K_SEAL_OF_APPROVAL:-true}"
+        HAS_ANTARES_THREE_LITTLE_FRONZIES_BADGE="${HAS_ANTARES_THREE_LITTLE_FRONZIES_BADGE:-true}"
+        :
+        ghexport() { echo "$1=${!1}" >> $GITHUB_ENV; }
+        ghexport TRAVIS_BRANCH
+        ghexport TRAVIS_EVENT_TYPE
+        ghexport TRAVIS_PULL_REQUEST
+        ghexport TRAVIS_REPO_SLUG
+        :
+        "$GITHUB_ACTION_PATH"/travis-script-builder.php $INPUT_STAGES > "$GITHUB_ACTION_PATH"/build.sh
+        /bin/bash "$GITHUB_ACTION_PATH"/build.sh
+        :
+        ghexport TRAVIS_CMD
+        ghexport TRAVIS_TEST_RESULT
