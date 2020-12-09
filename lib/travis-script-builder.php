@@ -14,7 +14,7 @@
 use Ktomk\Pipelines\Lib;
 use Ktomk\Pipelines\Yaml\Yaml as Yaml;
 
-require __DIR__ . '/lib/autoload.php';
+require __DIR__ . '/autoload.php';
 
 $file = getenv('INPUT_FILE') ?: '.travis.yml';
 
@@ -61,9 +61,9 @@ $runCustomStage = function ($stage) use ($config, $cmd, $result, &$assert) {
     }
 };
 
-$raw(file_get_contents(__DIR__ . '/lib/template/header.sh'));
+$raw(file_get_contents(__DIR__ . '/template/header.sh'));
 foreach ($argv as $ix => $stage) {
     if (0 === $ix) continue;
     isset($config[$stage]) && $runCustomStage($stage);
 }
-$raw(file_get_contents(__DIR__ . '/lib/template/footer.sh'));
+$raw(file_get_contents(__DIR__ . '/template/footer.sh'));

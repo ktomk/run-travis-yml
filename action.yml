@@ -1,7 +1,6 @@
----
 name: run .travis.yml
-author: infer from git revision of this file ~~~ktomk
-description: Run `.travis.yml` Stages/Scripts from Travis-CI as Github Action
+author: Tom Klingenberg <https://github.com/ktomk>
+description: Run `.travis.yml` Stages/Scripts (Travis-CI) as Github Action (Github)
 
 branding:
   color: yellow
@@ -12,6 +11,7 @@ inputs:
     description: 'path to .travis.yml'
     default: '.travis.yml'
     required: false
+
   stages:
     description: 'space separated list of stages to run'
     default: ''
@@ -19,11 +19,13 @@ inputs:
 
 runs:
   using: composite
+
   steps:
     - shell: bash
       env:
         INPUT_STAGES: ${{ inputs.stages }}
         INPUT_FILE: ${{ inputs.file }}
+
       run: |
         TRAVIS_BRANCH="${TRAVIS_BRANCH:-${{ github.head_ref }}}"
         # TRAVIS_BUILD_ID
@@ -44,7 +46,7 @@ runs:
         ghexport TRAVIS_PULL_REQUEST
         ghexport TRAVIS_REPO_SLUG
         :
-        "$GITHUB_ACTION_PATH"/travis-script-builder.php $INPUT_STAGES > "$GITHUB_ACTION_PATH"/build.sh
+        "$GITHUB_ACTION_PATH"/lib/travis-script-builder.php $INPUT_STAGES > "$GITHUB_ACTION_PATH"/build.sh
         /bin/bash "$GITHUB_ACTION_PATH"/build.sh
         :
         ghexport TRAVIS_CMD

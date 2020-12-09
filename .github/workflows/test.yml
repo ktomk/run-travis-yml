@@ -1,37 +1,36 @@
-name: C/I
+name: CI
 
 on: push
 
 jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
 
-  ubuntu1604:
-    runs-on: ubuntu-16.04
     steps:
       - uses: actions/checkout@v2
+      - run: test/shell.sh
 
-      # Run action itself on test .travis.yml file
-      - uses: ./.
-        with:
-          file: test/.travis.yml
+  try-machine:
+    name: action on ${{ matrix.machine }}
+    runs-on: ${{ matrix.machine }}
+    needs: test
+    continue-on-error: ${{ matrix.experimental }}
 
+    strategy:
+      fail-fast: false
+      matrix:
+        machine:
+          - ubuntu-16.04
+          - ubuntu-18.04
+          - ubuntu-20.04
+          - macos-10.15
+          - macos-11.0
+          - windows-2019
+        experimental: [false]
 
-  ubuntu1804:
-    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
-
-      # Run action itself on test .travis.yml file
-      - uses: ./.
-        with:
-          file: test/.travis.yml
-
-
-  ubuntu2004:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-
-      # Run action itself on test .travis.yml file
       - uses: ./.
         with:
           file: test/.travis.yml
