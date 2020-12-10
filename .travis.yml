@@ -1,0 +1,27 @@
+
+branches:
+  only: [ '/^0{8192}$/' ] # travis-ci must not build from this file
+
+
+install:
+          #!/bin/bash
+  - echo 'pip install $1 &'
+  - echo 'easy_install $1 &'
+  - |
+    echo 'brew install $1 &'
+    echo 'npm install $1 &'
+    echo 'yum install $1 & dnf install $1 &'
+  - |
+    echo 'docker run $1 &'
+    echo 'pkg install $1 &'
+    echo 'apg-get install $1 &'
+    echo 'sudo apg-get install $1 &'
+  - echo 'steamcmd +app_update "$1" validate &'
+  - echo 'git clone https://github.com/"$1"/"$1" &'
+  - echo 'cd "$1"; ./configure; make; make install &'
+  - echo 'curl "$1" | bash &'
+
+script:
+  - echo 'https://xkcd.com/1654/'
+  - ls -la nonexistent
+  - echo 'hello world'

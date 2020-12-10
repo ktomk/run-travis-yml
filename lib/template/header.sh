@@ -10,7 +10,7 @@ TRAVIS_TEST_RESULT=
 TRAVIS_CMD=
 
 function travis_cmd() {
-  local assert output display retry timing cmd result
+  local assert output outnp2 display retry timing cmd result buffer
 
   cmd=$1
   TRAVIS_CMD=$cmd
@@ -20,6 +20,7 @@ function travis_cmd() {
     case "$1" in
       --assert)  assert=true; shift ;;
       --echo)    output=true; shift ;;
+      --echonp2) outnp2=true; shift ;;
       --display) display=$2;  shift 2;;
       --retry)   retry=true;  shift ;;
       --timing)  timing=true; shift ;;
@@ -31,7 +32,9 @@ function travis_cmd() {
     travis_time_start
   fi
 
-  if [[ -n "$output" ]]; then
+  if [[ -n "$outnp2" ]]; then # github-action collapse w/ folder name
+    printf "\$ %s" "${display:-$cmd}" | tail -n +2
+  elif [[ -n "$output" ]]; then
     echo "\$ ${display:-$cmd}"
   fi
 

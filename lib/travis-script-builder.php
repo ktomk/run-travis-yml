@@ -35,13 +35,31 @@ $assert = false;
 $raw = function($buffer) {
     fwrite(STDOUT, $buffer);
 };
-$cmd = function($command, $fold, $foldName) use (&$assert, $raw) {
+$head1 = function($buffer) {
+    $lines = explode("\n", $buffer, 2) + array("", null);
+    return $lines[0];
+};
+$label = function($text) {
+    $verticalFourDots = "\xE2\x81\x9E";
+    $squareFourDots = "\xE2\xB8\xAC";
+    $bullet = "\xE2\x80\xA2";
+    $punct = $bullet;
+    $nbsp = "\xC2\xA0";
+    return sprintf("\033[34m%s%s\033[0m\033[34m%s\033[0m",
+        "$punct$nbsp", $text,"$nbsp$punct");
+};
+$cmd = function($command, $fold, $foldName) use (&$assert, $raw, $head1, $label) {
+    $echo = '--echo';
     $args = array(
         $command,
         $assert ? '--assert' : null,
-        array('--echo', '--timing'),
+        array(&$echo, '--timing'),
     );
-    $fold && $raw(sprintf("%s\n", Lib::cmd('travis_fold', array('start', $foldName))));
+    if ($fold) {
+        $echo = '--echonp2';
+        $foldName = sprintf("%s %s", $head1($command), $label($foldName));
+        $raw(sprintf("%s\n", Lib::cmd('travis_fold', array('start', $foldName))));
+    }
     $raw(sprintf("%s\n", Lib::cmd('travis_cmd', $args)));
     $fold && $raw(sprintf("%s\n", Lib::cmd('travis_fold', array('end', $foldName))));
 };

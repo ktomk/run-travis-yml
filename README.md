@@ -66,6 +66,11 @@ Packaged as a *Github Action* for everyone it may be useful.
   a deploy tool made for continuous deployment
 * [JoshCheek/travis-environment](https://github.com/JoshCheek/travis-environment
   ) - A repo to reflect on the Travis CI environment
+* [Travis to GitHub Actions converter](https://akx.github.io/travis-to-github-actions/
+  ) - SPA to convert Travis.yml workflows to GitHub Actions; Python and
+  Node.js workflows, contributions welcome; by Aarni Koskela; Dec 2020
+* [Migrating From Travis to GitHub Actions](https://markphelps.me/2019/09/migrating-from-travis-to-github-actions/)
+  by Mark Phelps; Sep 2019
 * [Migrate From Travis CI to GitHub Actions](https://developer.okta.com/blog/2020/05/18/travis-ci-to-github-actions)
   by Brian Demers for Okta; May 2020
 * [ktomk/pipelines](https://github.com/ktomk/pipelines) - Command line

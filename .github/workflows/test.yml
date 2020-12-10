@@ -34,3 +34,5 @@ jobs:
       - uses: ./.
         with:
           file: test/.travis.yml
+
+      - uses: ./.

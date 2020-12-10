@@ -47,7 +47,14 @@ runs:
         ghexport TRAVIS_REPO_SLUG
         :
         "$GITHUB_ACTION_PATH"/lib/travis-script-builder.php $INPUT_STAGES > "$GITHUB_ACTION_PATH"/build.sh
-        /bin/bash "$GITHUB_ACTION_PATH"/build.sh
+        if [[ "$TRAVIS_REPO_SLUG" = "ktomk/run-travis-yml" ]]; then
+          /bin/bash "$GITHUB_ACTION_PATH"/build.sh || :
+          echo "(the build error is by intention)"
+          echo "(this is ktomk/run-travis-yml and can not fail)"
+          echo "(your build would have failed)"
+        else
+          /bin/bash "$GITHUB_ACTION_PATH"/build.sh
+        fi
         :
         ghexport TRAVIS_CMD
         ghexport TRAVIS_TEST_RESULT
