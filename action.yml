@@ -24,7 +24,12 @@ runs:
     - shell: bash
 
       run: |
-        TRAVIS_BRANCH="${TRAVIS_BRANCH:-${{ github.head_ref }}}"
+        gh_refname() { echo "${1#refs/*/}"; }
+        :
+        CI="${CI:-true}"
+        HAS_JOSH_K_SEAL_OF_APPROVAL="${HAS_JOSH_K_SEAL_OF_APPROVAL:-true}"
+        HAS_ANTARES_THREE_LITTLE_FRONZIES_BADGE="${HAS_ANTARES_THREE_LITTLE_FRONZIES_BADGE:-true}"
+        TRAVIS_BRANCH="$(gh_refname "${TRAVIS_BRANCH:-${GITHUB_BASE_REF:-$GITHUB_REF}}")"
         # TRAVIS_BUILD_ID
         # TRAVIS_BUILD_NUMBER
         # TRAVIS_COMMIT
@@ -34,16 +39,15 @@ runs:
         TRAVIS_PULL_REQUEST="${TRAVIS_PULL_REQUEST:-${{ github.event.number }}}"
         TRAVIS_REPO_SLUG="${TRAVIS_REPO_SLUG:-${{ github.repository }}}"
         TRAVIS_YAML_FILE="${TRAVIS_YAML_FILE:-${{ inputs.file }}}"
-        CI="${CI:-true}"
-        HAS_JOSH_K_SEAL_OF_APPROVAL="${HAS_JOSH_K_SEAL_OF_APPROVAL:-true}"
-        HAS_ANTARES_THREE_LITTLE_FRONZIES_BADGE="${HAS_ANTARES_THREE_LITTLE_FRONZIES_BADGE:-true}"
         :
-        ghexport() { echo "$1=${!1}" >> $GITHUB_ENV; }
-        ghexport TRAVIS_BRANCH
-        ghexport TRAVIS_EVENT_TYPE
-        ghexport TRAVIS_PULL_REQUEST
-        ghexport TRAVIS_REPO_SLUG
-        ghexport TRAVIS_YAML_FILE
+        printf '::group::env: \033[34m%s\033[0m\n' ".travis.yml"
+        gh_export() { export "$1"; echo "$1=${!1}" >> $GITHUB_ENV; printf '  %s: %s\n' "$1" "${!1}"; }
+        gh_export TRAVIS_BRANCH
+        gh_export TRAVIS_EVENT_TYPE
+        gh_export TRAVIS_PULL_REQUEST
+        gh_export TRAVIS_REPO_SLUG
+        gh_export TRAVIS_YAML_FILE
+        printf '::endgroup::\n'
         :
         "$GITHUB_ACTION_PATH"/lib/travis-script-builder.php --file "$TRAVIS_YAML_FILE" "${{ inputs.stages }}" \
           > "$GITHUB_ACTION_PATH"/build.sh
@@ -65,8 +69,10 @@ runs:
         :
         TRAVIS_YAML_FILE_LAST="${TRAVIS_YAML_FILE}"
         TRAVIS_YAML_FILE=
-        ghexport TRAVIS_TEST_RESULT
-        ghexport TRAVIS_YAML_FILE
-        ghexport TRAVIS_YAML_FILE_LAST
+        printf '::group::env: \033[34m%s\033[0m (post)\n' ".travis.yml"
+        gh_export TRAVIS_TEST_RESULT
+        gh_export TRAVIS_YAML_FILE
+        gh_export TRAVIS_YAML_FILE_LAST
+        printf '::endgroup::\n'
         :
         exit $build_result
