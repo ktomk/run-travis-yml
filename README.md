@@ -66,6 +66,8 @@ This projects [`.travis.yml`](.travis.yml) [running as Github Action][example].
 * Similar on Github for the timing information as nice as the
   one on Travis-CI (the display on Travis CI is generally looking better to
   me, also while the action is running, Github truncates log output).
+* First error in script is annotated. Further, following output folded to
+  keep things more visible within the Github log viewer.
 * Github has no allow-failure option when running actions. That
   means the first failing build (action) cancels the overall workflow.
   [`continue-on-error:`][coe] may help, see

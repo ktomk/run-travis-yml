@@ -8,6 +8,7 @@ ANSI_CLEAR="\033[0K"
 
 TRAVIS_TEST_RESULT=
 TRAVIS_CMD=
+TRAVIS_YAML_ERROR_COUNT=0
 
 function travis_cmd() {
   local assert output outnp2 display retry timing cmd result buffer
@@ -33,9 +34,9 @@ function travis_cmd() {
   fi
 
   if [[ -n "$outnp2" ]]; then # github-action collapse w/ folder name
-    printf "\$ %s" "${display:-$cmd}" | tail -n +2
+    printf "$ %s" "${display:-$cmd}" | tail -n +2
   elif [[ -n "$output" ]]; then
-    echo "\$ ${display:-$cmd}"
+    printf '$ %s\n' "${display:-$cmd}"
   fi
 
   if [[ -n "$retry" ]]; then
@@ -99,7 +100,13 @@ travis_result() {
   if [ $result -eq 0 ]; then
     echo -e "\n${ANSI_GREEN}The command \"$TRAVIS_CMD\" exited with $result.${ANSI_RESET}"
   else
-    echo -e "\n${ANSI_RED}The command \"$TRAVIS_CMD\" exited with $result.${ANSI_RESET}"
+    echo -e "${ANSI_RED}The command \"$TRAVIS_CMD\" exited with $result.${ANSI_RESET}"
+    # message first error and fold afterwards
+    TRAVIS_YAML_ERROR_COUNT=$((TRAVIS_YAML_ERROR_COUNT + 1))
+    if [ $TRAVIS_YAML_ERROR_COUNT -eq 1 ]; then
+      printf '::error file=%s::.travis.yml: The command %q exited with %s.\n' "${TRAVIS_YAML_FILE-.travis.yml}" "$TRAVIS_CMD" "$result"
+      printf '::group::\033[34m%s\033[0m\n' "after error continuation"
+    fi
   fi
 }
 
@@ -173,7 +180,8 @@ travis_retry() {
   local count=1
   while [ $count -le 3 ]; do
     [ $result -ne 0 ] && {
-      echo -e "\n${ANSI_RED}The command \"$@\" failed. Retrying, $count of 3.${ANSI_RESET}\n" >&2
+      printf '\n::endgroup::\n'
+      echo -e "${ANSI_RED}The command \"$@\" failed. Retrying, $count of 3.${ANSI_RESET}\n" >&2
     }
     "$@"
     result=$?
@@ -196,7 +204,7 @@ travis_fold() {
   if [[ $action = "start" ]]; then
     printf '::group::%s\n' "$name"
   else
-    echo '::endgroup::'
+    printf '::endgroup::\n'
   fi
 }
 
