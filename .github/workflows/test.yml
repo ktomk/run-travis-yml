@@ -12,7 +12,7 @@ jobs:
       - run: test/shell.sh
 
   try-machine:
-    name: action on ${{ matrix.machine }}
+    name: run on ${{ matrix.machine }}
     runs-on: ${{ matrix.machine }}
     needs: test
     continue-on-error: ${{ matrix.experimental }}
@@ -31,8 +31,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: ./.
+      - name: run test .travis.yml
+        uses: ./.
         with:
           file: test/.travis.yml
 
-      - uses: ./.
+      - name: run .travis.yml
+        uses: ./.

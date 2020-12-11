@@ -16,7 +16,20 @@ Extracting parts of the open-source interface of Travis-CI from
 `.travis.yml` more portable to Github w/o changing everything at once
 and a smoother migration.
 
-Packaged as a *Github Action* for everyone it may be useful.
+[Example](#example)
+| [Usage](#usage)
+| [Notes](#notes)
+| [Copying](#copying)
+| [Resources](#resources)
+
+## Example
+
+[![Image of Yaktocat](run-travis-yml.png)][example]
+
+This projects [`.travis.yml`](.travis.yml) [running as Github Action][example].
+
+<!-- FIXME(tk) stale link, gone after 90 days from 2020-12-12 due to log retention -->
+[example]: https://github.com/ktomk/run-travis-yml/runs/1540760369?check_suite_focus=true#step:4:1
 
 ## Usage
 
@@ -46,10 +59,12 @@ Packaged as a *Github Action* for everyone it may be useful.
   [`travis-build`][TRAVIS-BUILD].
 * Custom stages only (no matrix, deployment, after_success etc.), this needs
   additional matrix/actions in your workflow (checkout, VM setup, services,
-  caching).
-* The runner on Github does not have the timing information as nice as the
-  one on Travis-CI. Folding works but hides the first line of the command
-  when collapsed (the display on Travis CI is generally looking better to
+  caching). Helps to do an actual migration, e.g. reducing matrix on Travis
+  first to get build minutes down, the matrix on Github is not affected by
+  that.
+* Folding supported, Github just has no such nice labels thought.
+* Similar on Github for the timing information as nice as the
+  one on Travis-CI (the display on Travis CI is generally looking better to
   me, also while the action is running, Github truncates log output).
 * Github has no allow-failure option when running actions. That
   means the first failing build (action) cancels the overall workflow.
