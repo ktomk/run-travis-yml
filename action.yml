@@ -17,6 +17,11 @@ inputs:
     default: ''
     required: true
 
+  allow_failure:
+    description: 'allow to fail, see TRAVIS_ALLOW_FAILURE'
+    default: false
+    required: false
+
 runs:
   using: composite
 
@@ -29,6 +34,7 @@ runs:
         CI="${CI:-true}"
         HAS_JOSH_K_SEAL_OF_APPROVAL="${HAS_JOSH_K_SEAL_OF_APPROVAL:-true}"
         HAS_ANTARES_THREE_LITTLE_FRONZIES_BADGE="${HAS_ANTARES_THREE_LITTLE_FRONZIES_BADGE:-true}"
+        TRAVIS_ALLOW_FAILURE="${TRAVIS_ALLOW_FAILURE:-${{ inputs.allow_failure }}}"
         TRAVIS_BRANCH="$(gh_refname "${TRAVIS_BRANCH:-${GITHUB_BASE_REF:-$GITHUB_REF}}")"
         # TRAVIS_BUILD_ID
         # TRAVIS_BUILD_NUMBER
@@ -42,6 +48,7 @@ runs:
         :
         printf '::group::env: \033[34m%s\033[0m\n' ".travis.yml"
         gh_export() { export "$1"; echo "$1=${!1}" >> $GITHUB_ENV; printf '  %s: %s\n' "$1" "${!1}"; }
+        gh_export TRAVIS_ALLOW_FAILURE
         gh_export TRAVIS_BRANCH
         gh_export TRAVIS_EVENT_TYPE
         gh_export TRAVIS_PULL_REQUEST
@@ -58,13 +65,9 @@ runs:
           TRAVIS_TEST_RESULT=$build_result
         set -e
         :
-        if [[ "$TRAVIS_REPO_SLUG" = "ktomk/run-travis-yml" ]]; then
-          if [[ $build_result -ne 0 ]]; then
-            echo "(the build error is by intention)"
-            echo "(this is ktomk/run-travis-yml and can not fail)"
-            build_result=0 # silent
-            echo "(your build would have failed)"
-          fi
+        if [[ $build_result -ne 0 ]] && [[ "$TRAVIS_ALLOW_FAILURE" = "true" ]]; then
+          printf '\033[34mTRAVIS_ALLOW_FAILURE for build exit status %s\033[0m\n' "$build_result"
+          build_result=0 # silent
         fi
         :
         TRAVIS_YAML_FILE_LAST="${TRAVIS_YAML_FILE}"

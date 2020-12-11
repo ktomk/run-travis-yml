@@ -38,3 +38,5 @@ jobs:
 
       - name: run .travis.yml
         uses: ./.
+        env:
+          TRAVIS_ALLOW_FAILURE: true

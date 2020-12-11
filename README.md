@@ -41,6 +41,7 @@ This projects [`.travis.yml`](.travis.yml) [running as Github Action][example].
       stages: |
         install
         script
+      allow_failure: false
     env:
       TRAVIS_PHP_VERSION: ${{ matrix.php-versions }}
 ```
@@ -49,6 +50,10 @@ This projects [`.travis.yml`](.travis.yml) [running as Github Action][example].
   (by default `.travis.yml`).
 * (*optional*) **Stages to run** can be specified `with:` `stages:` as a space
   separated list (by default [all custom stages][acs] are run).
+* (*optional*) **Allow failure** can be enabled `with:` `allow_failure: true`,
+  even if the `.travis.yml` file run exits non-zero, it will not fail.
+  Double check cache and artifacts configuration for side effects.
+  `TRAVIS_TEST_RESULT` environment variable has the scripts exit status.
 * **Environment variables** are likely incomplete (some are ported), add
   missing ones or override your own, the `env:` is key.
 
@@ -68,10 +73,9 @@ This projects [`.travis.yml`](.travis.yml) [running as Github Action][example].
   me, also while the action is running, Github truncates log output).
 * First error in script is annotated. Further, following output folded to
   keep things more visible within the Github log viewer.
-* Github has no allow-failure option when running actions. That
-  means the first failing build (action) cancels the overall workflow.
-  [`continue-on-error:`][coe] may help, see
-  [actions/toolkit#399][at-399].
+* Github has no allow-failure option when running action job steps. The
+  job-wide [`continue-on-error:`][coe] may help, see
+  [actions/toolkit#399][at-399] as well.
 
 ## Copying
 `AGPL-3.0-or-later` see [COPYING], `MIT` for files from *travis-build* see
