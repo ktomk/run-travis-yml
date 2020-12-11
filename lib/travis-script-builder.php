@@ -4,7 +4,12 @@
 /*
  * travis script builder - ease migration from travis.yml to other platforms
  *
- * just a minimal, quick port
+ * a minimal, build.sh port from travis-build
+ *
+ * usage: ./travis-script-builder.php [--file <travis-yml-path>] [<stage>...]
+ *
+ * environment:
+ *     TRAVIS_YAML_FILE    path to .travis.yml file
  *
  * https://github.com/travis-ci/travis-build/tree/master/lib/travis
  * https://github.com/travis-ci/travis-build/blob/master/lib/travis/build/stages.rb
@@ -16,14 +21,29 @@ use Ktomk\Pipelines\Yaml\Yaml as Yaml;
 
 require __DIR__ . '/autoload.php';
 
-$file = getenv('INPUT_FILE') ?: '.travis.yml';
-
-$stageNames = array('setup', 'before_install', 'install', 'before_script', 'script', 'after_script', 'before_deploy');
-
-if (!isset($argv[1])) {
-    $argv = array_merge($argv, $stageNames);
+# --file option and argument
+$defaultFile = getenv('TRAVIS_YAML_FILE') ?: '.travis.yml';
+$file = $defaultFile;
+if (isset($argv[1]) && in_array($argv[1], array('-f', '--file'), true)) {
+    if (!isset($argv[2])) {
+        fprintf(STDERR, "fatal: %s needs an argument\n", $argv[1]);
+        exit(1);
+    }
+    $file = $argv[2];
+    array_splice($argv, 1, 2);
 }
 
+# stage operands
+$stageNames = array('setup', 'before_install', 'install', 'before_script', 'script', 'after_script', 'before_deploy');
+if (isset($argv[1]) && '' !== trim($argv[1])) {
+    $stages = array_reduce(array_splice($argv, 1), function ($carry, $item) {
+        return array_merge($carry, array_filter(preg_split('~[^a-z_]+~i', $item)));
+    }, array());
+} else {
+    $stages = $stageNames;
+}
+
+# open .travis.yml file
 try {
     $config = Yaml::file($file);
 } catch (Exception $e) {
@@ -31,6 +51,7 @@ try {
     exit(1);
 }
 
+# render bash.sh script (rest)
 $assert = false;
 $raw = function($buffer) {
     fwrite(STDOUT, $buffer);
@@ -80,8 +101,7 @@ $runCustomStage = function ($stage) use ($config, $cmd, $result, &$assert) {
 };
 
 $raw(file_get_contents(__DIR__ . '/template/header.sh'));
-foreach ($argv as $ix => $stage) {
-    if (0 === $ix) continue;
+foreach ($stages as $ix => $stage) {
     isset($config[$stage]) && $runCustomStage($stage);
 }
 $raw(file_get_contents(__DIR__ . '/template/footer.sh'));

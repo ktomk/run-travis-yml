@@ -17,18 +17,36 @@ if command -v misspell; then
   misspell README.md
 fi
 
-#  [1] build with default file name
-(
-  cd test
-
+: [1] build with default file name
+( cd test
   rm -f build.sh
   ../lib/travis-script-builder.php > build.sh
   test -f build.sh
   grep '"hello world"' build.sh
 )
 
-#  [2] build with $INPUT_FILE
+: [2] build with "$TRAVIS_YAML_FILE"
 rm -f test/build.sh
-INPUT_FILE=test/.travis.yml ./lib/travis-script-builder.php > test/build.sh
+TRAVIS_YAML_FILE=test/.travis.yml ./lib/travis-script-builder.php > test/build.sh
 test -f test/build.sh
 grep '"hello world"' test/build.sh
+
+: [3] build with --file
+rm -f test/build.sh
+./lib/travis-script-builder.php --file test/.travis.yml > test/build.sh
+test -f test/build.sh
+grep '"hello world"' test/build.sh
+
+: [4] fail with --file
+./lib/travis-script-builder.php --file 2>&1  | grep 'fatal: --file needs an argument'
+
+: [5] run stages
+test "$(./lib/travis-script-builder.php -f test/.travis.yml "-
+" | grep -c '"hello world"')" -eq 0 # script execution
+test "$(./lib/travis-script-builder.php -f test/.travis.yml \
+  | grep -c '"hello world"')" -eq 1 # script execution
+test "$(./lib/travis-script-builder.php -f test/.travis.yml "script
+script" | grep -c '"hello world"')" -eq 2 # script executions
+test "$(./lib/travis-script-builder.php -f test/.travis.yml "script
+foo-script  foo-bar-baz
+script" | grep -c '"hello world"')" -eq 3 # script executions

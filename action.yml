@@ -22,9 +22,6 @@ runs:
 
   steps:
     - shell: bash
-      env:
-        INPUT_STAGES: ${{ inputs.stages }}
-        INPUT_FILE: ${{ inputs.file }}
 
       run: |
         TRAVIS_BRANCH="${TRAVIS_BRANCH:-${{ github.head_ref }}}"
@@ -36,6 +33,7 @@ runs:
         # TRAVIS_JOB_ID
         TRAVIS_PULL_REQUEST="${TRAVIS_PULL_REQUEST:-${{ github.event.number }}}"
         TRAVIS_REPO_SLUG="${TRAVIS_REPO_SLUG:-${{ github.repository }}}"
+        TRAVIS_YAML_FILE="${TRAVIS_YAML_FILE:-${{ inputs.file }}}"
         CI="${CI:-true}"
         HAS_JOSH_K_SEAL_OF_APPROVAL="${HAS_JOSH_K_SEAL_OF_APPROVAL:-true}"
         HAS_ANTARES_THREE_LITTLE_FRONZIES_BADGE="${HAS_ANTARES_THREE_LITTLE_FRONZIES_BADGE:-true}"
@@ -45,16 +43,30 @@ runs:
         ghexport TRAVIS_EVENT_TYPE
         ghexport TRAVIS_PULL_REQUEST
         ghexport TRAVIS_REPO_SLUG
+        ghexport TRAVIS_YAML_FILE
         :
-        "$GITHUB_ACTION_PATH"/lib/travis-script-builder.php $INPUT_STAGES > "$GITHUB_ACTION_PATH"/build.sh
-        if [[ "$TRAVIS_REPO_SLUG" = "ktomk/run-travis-yml" ]]; then
-          /bin/bash "$GITHUB_ACTION_PATH"/build.sh || :
-          echo "(the build error is by intention)"
-          echo "(this is ktomk/run-travis-yml and can not fail)"
-          echo "(your build would have failed)"
-        else
+        "$GITHUB_ACTION_PATH"/lib/travis-script-builder.php --file "$TRAVIS_YAML_FILE" "${{ inputs.stages }}" \
+          > "$GITHUB_ACTION_PATH"/build.sh
+        :
+        set +e
           /bin/bash "$GITHUB_ACTION_PATH"/build.sh
+          build_result=$?
+          TRAVIS_TEST_RESULT=$build_result
+        set -e
+        :
+        if [[ "$TRAVIS_REPO_SLUG" = "ktomk/run-travis-yml" ]]; then
+          if [[ $build_result -ne 0 ]]; then
+            echo "(the build error is by intention)"
+            echo "(this is ktomk/run-travis-yml and can not fail)"
+            build_result=0 # silent
+            echo "(your build would have failed)"
+          fi
         fi
         :
-        ghexport TRAVIS_CMD
+        TRAVIS_YAML_FILE_LAST="${TRAVIS_YAML_FILE}"
+        TRAVIS_YAML_FILE=
         ghexport TRAVIS_TEST_RESULT
+        ghexport TRAVIS_YAML_FILE
+        ghexport TRAVIS_YAML_FILE_LAST
+        :
+        exit $build_result
