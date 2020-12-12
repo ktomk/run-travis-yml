@@ -81,7 +81,7 @@ $cmd = function($command, $fold, $foldName) use (&$assert, $raw, $head1, $label)
         $foldName = sprintf("%s %s", $head1($command), $label($foldName));
         $raw(sprintf("%s\n", Lib::cmd('travis_fold', array('start', $foldName))));
     }
-    $raw(sprintf("%s\n", Lib::cmd('travis_cmd', $args)));
+    $raw(sprintf("2>&1 %s\n", Lib::cmd('travis_cmd', $args)));
     $fold && $raw(sprintf("%s\n", Lib::cmd('travis_fold', array('end', $foldName))));
 };
 $result = function() use ($raw) {
