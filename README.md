@@ -71,8 +71,9 @@ This projects [`.travis.yml`](.travis.yml) [running as Github Action][example].
 * Similar on Github for the timing information as nice as the
   one on Travis-CI (the display on Travis CI is generally looking better to
   me, also while the action is running, Github truncates log output).
-* First error in script is annotated. Further, following output folded to
-  keep things more visible within the Github log viewer.
+* First error in script is annotated. If `TRAVIS_ALLOW_FAILURE` as warning.
+  Further, following output folded to keep it better visible within the
+  Github log viewer.
 * Github has no allow-failure option when running action job steps. The
   job-wide [`continue-on-error:`][coe] may help, see
   [actions/toolkit#399][at-399] as well.

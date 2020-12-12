@@ -9,7 +9,17 @@ fi
 if command -v shellcheck; then
   shellcheck --version
   shellcheck lib/script/install.sh
+  shellcheck --shell=bash lib/action.sh
+  shellcheck --shell=bash lib/binding.sh
   shellcheck test/shell.sh
+fi
+
+if command -v /usr/bin/shellcheck; then
+  /usr/bin/shellcheck --version
+  /usr/bin/shellcheck lib/script/install.sh
+  /usr/bin/shellcheck --shell=bash lib/action.sh
+  /usr/bin/shellcheck --shell=bash lib/binding.sh
+  /usr/bin/shellcheck test/shell.sh
 fi
 
 if command -v misspell; then
@@ -50,3 +60,6 @@ script" | grep -c '"hello world"')" -eq 2 # script executions
 test "$(./lib/travis-script-builder.php -f test/.travis.yml "script
 foo-script  foo-bar-baz
 script" | grep -c '"hello world"')" -eq 3 # script executions
+
+: [6] execute build.sh script
+./test/action.sh

@@ -10,6 +10,17 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: test/shell.sh
+      - name: test action
+        uses: ./.
+        with:
+          file: test/.travis.yml
+
+      - name: test project .travis.yml action
+        uses: ./.
+        with:
+          allow_failure: true
+        env:
+          TRAVIS_YAML_FILE: .travis.yml
 
   try-machine:
     name: run on ${{ matrix.machine }}
@@ -31,11 +42,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: run test .travis.yml
-        uses: ./.
-        with:
-          file: test/.travis.yml
-
       - name: run .travis.yml
         uses: ./.
         env:

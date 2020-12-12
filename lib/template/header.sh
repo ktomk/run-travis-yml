@@ -8,7 +8,6 @@ ANSI_CLEAR="\033[0K"
 
 TRAVIS_TEST_RESULT=
 TRAVIS_CMD=
-TRAVIS_YAML_ERROR_COUNT=0
 
 function travis_cmd() {
   local assert output outnp2 display retry timing cmd result
@@ -101,12 +100,7 @@ travis_result() {
     echo -e "\n${ANSI_GREEN}The command \"$TRAVIS_CMD\" exited with $result.${ANSI_RESET}"
   else
     echo -e "\n${ANSI_RED}The command \"$TRAVIS_CMD\" exited with $result.${ANSI_RESET}"
-    # message first error and fold afterwards
-    TRAVIS_YAML_ERROR_COUNT=$((TRAVIS_YAML_ERROR_COUNT + 1))
-    if [ $TRAVIS_YAML_ERROR_COUNT -eq 1 ]; then
-      printf '::error file=%s::.travis.yml: The command %q exited with %s.\n' "${TRAVIS_YAML_FILE-.travis.yml}" "$TRAVIS_CMD" "$result"
-      printf '::group::\033[34m%s\033[0m\n' "after error continuation"
-    fi
+    gh_travis_result_error "$result"
   fi
 }
 
