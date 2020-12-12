@@ -14,7 +14,7 @@ fi
 
 if command -v misspell; then
   misspell -v
-  misspell README.md
+  misspell -error README.md action.yml
 fi
 
 : [1] build with default file name
