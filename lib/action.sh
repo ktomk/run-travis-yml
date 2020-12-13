@@ -30,7 +30,7 @@ gh_var TRAVIS_EVENT_TYPE                       "$(gh_eventname "${event_name?"ev
 # TRAVIS_PULL_REQUEST:
 #   * The pull request number if the current job is a pull request, “false” if it’s not a pull request
 #   ... needs review ... test pull request ...
-gh_var TRAVIS_PULL_REQUEST                     '' event_number
+gh_var TRAVIS_PULL_REQUEST                     false event_number
 gh_var TRAVIS_REPO_SLUG                        '' repository
 gh_var TRAVIS_SUDO                             "$(gh_sudo)"
 gh_var TRAVIS_YAML_FILE                        '.travis.yml' travis_file
