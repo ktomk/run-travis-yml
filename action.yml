@@ -8,74 +8,65 @@ branding:
 
 inputs:
   file:
-    description: 'path to .travis.yml'
-    default: '.travis.yml'
+    description: |
+      Path to `.travis.yml` file. Leave empty / unset for default
+      `.travis.yml`. Relative to project root. Overrides the
+      `TRAVIS_YAML_FILE` environment variable if non-empty.
+    default: ''
     required: false
 
   stages:
-    description: 'space separated list of stages to run'
+    description: |
+      Space separated list of stages to run. Leave empty
+      / unset to run all custom stage scripts.
     default: ''
     required: true
 
   allow_failure:
-    description: 'allow to fail, see TRAVIS_ALLOW_FAILURE'
-    default: false
+    description: |
+      Allow the .travis.yml build to fail. Possible values are
+      `true` and `false`. Overrides the `TRAVIS_ALLOW_FAILURE`
+      environment variable if set.
+    default: ''
     required: false
+
+outputs:
+  test_result:
+    description: |
+      Outcome of `TRAVIS_TEST_RESULT`, either `0` if all commands
+      in the `script` section have exited with zero or `1`
+      otherwise.
+    value: ${{ steps.travis-build-sh.outputs.exit-status }}
+
+  conclusion:
+    description: |
+      The result of the .travis.yml build after `allow_failure`
+      / `TRAVIS_ALLOW_FAILURE` is applied. Possible values
+      are `success` or `failure`.
+    value: ${{ steps.travis-build-sh.outputs.conclusion }}
+
+  outcome:
+    description: |
+      The result of the .travis.yml build before `allow_failure`
+      / `TRAVIS_ALLOW_FAILURE` is applied. Possible values
+      are `success` or `failure`.
+    value: ${{ steps.travis-build-sh.outputs.outcome }}
 
 runs:
   using: composite
 
   steps:
-    - shell: bash
-
+    - id: travis-build-sh
+      shell: bash
       run: |
-        gh_refname() { echo "${1#refs/*/}"; }
-        :
-        CI="${CI:-true}"
-        HAS_JOSH_K_SEAL_OF_APPROVAL="${HAS_JOSH_K_SEAL_OF_APPROVAL:-true}"
-        HAS_ANTARES_THREE_LITTLE_FRONZIES_BADGE="${HAS_ANTARES_THREE_LITTLE_FRONZIES_BADGE:-true}"
-        TRAVIS_ALLOW_FAILURE="${TRAVIS_ALLOW_FAILURE:-${{ inputs.allow_failure }}}"
-        TRAVIS_BRANCH="$(gh_refname "${TRAVIS_BRANCH:-${GITHUB_BASE_REF:-$GITHUB_REF}}")"
-        # TRAVIS_BUILD_ID
-        # TRAVIS_BUILD_NUMBER
-        # TRAVIS_COMMIT
-        # TRAVIS_COMMIT_RANGE
-        TRAVIS_EVENT_TYPE="$(if [[ "schedule" = "${{ github.event_name }}" ]]; then echo "cron"; else echo "${{ github.event_name }}"; fi)"
-        # TRAVIS_JOB_ID
-        TRAVIS_PULL_REQUEST="${TRAVIS_PULL_REQUEST:-${{ github.event.number }}}"
-        TRAVIS_REPO_SLUG="${TRAVIS_REPO_SLUG:-${{ github.repository }}}"
-        TRAVIS_YAML_FILE="${TRAVIS_YAML_FILE:-${{ inputs.file }}}"
-        :
-        printf '::group::env: \033[34m%s\033[0m\n' ".travis.yml"
-        gh_export() { export "$1"; echo "$1=${!1}" >> $GITHUB_ENV; printf '  %s: %s\n' "$1" "${!1}"; }
-        gh_export TRAVIS_ALLOW_FAILURE
-        gh_export TRAVIS_BRANCH
-        gh_export TRAVIS_EVENT_TYPE
-        gh_export TRAVIS_PULL_REQUEST
-        gh_export TRAVIS_REPO_SLUG
-        gh_export TRAVIS_YAML_FILE
-        printf '::endgroup::\n'
-        :
-        "$GITHUB_ACTION_PATH"/lib/travis-script-builder.php --file "$TRAVIS_YAML_FILE" "${{ inputs.stages }}" \
-          > "$GITHUB_ACTION_PATH"/build.sh
-        :
-        set +e
-          /bin/bash "$GITHUB_ACTION_PATH"/build.sh
-          build_result=$?
-          TRAVIS_TEST_RESULT=$build_result
-        set -e
-        :
-        if [[ $build_result -ne 0 ]] && [[ "$TRAVIS_ALLOW_FAILURE" = "true" ]]; then
-          printf '\033[34mTRAVIS_ALLOW_FAILURE for build exit status %s\033[0m\n' "$build_result"
-          build_result=0 # silent
-        fi
-        :
-        TRAVIS_YAML_FILE_LAST="${TRAVIS_YAML_FILE}"
-        TRAVIS_YAML_FILE=
-        printf '::group::env: \033[34m%s\033[0m (post)\n' ".travis.yml"
-        gh_export TRAVIS_TEST_RESULT
-        gh_export TRAVIS_YAML_FILE
-        gh_export TRAVIS_YAML_FILE_LAST
-        printf '::endgroup::\n'
-        :
-        exit $build_result
+        : [1/3] action binding
+        . "$GITHUB_ACTION_PATH"/lib/binding.sh
+        : [2/3] register action
+        reg  allow_failure      "${{ inputs.allow_failure }}"
+        reg  event_name         "${{ github.event_name }}"
+        reg  event_number       "${{ github.event.number }}"
+        reg  repository         "${{ github.repository }}"
+        reg  travis_file        "${{ inputs.file }}"
+        reg  travis_stages      "${{ inputs.stages }}"
+        : [3/3] action
+        . "$GITHUB_ACTION_PATH"/lib/action.sh

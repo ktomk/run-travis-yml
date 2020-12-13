@@ -24,14 +24,19 @@ and a smoother migration.
 
 ## Example
 
-[![Image of Yaktocat](run-travis-yml.png)][example]
+This projects [`.travis.yml`](.travis.yml) [running as Github Action][example-run]:
 
-This projects [`.travis.yml`](.travis.yml) [running as Github Action][example].
+[![Run of a .travis.yml in a Github Action](.github/assets/run-travis-yml.png)][example-run]
 
-<!-- FIXME(tk) stale link, gone after 90 days from 2020-12-12 due to log retention -->
-[example]: https://github.com/ktomk/run-travis-yml/runs/1540760369?check_suite_focus=true#step:4:1
+<!-- FIXME(tk) stale link, gone after 90 days from 2020-12-13 due to log retention -->
+[example-run]: https://github.com/ktomk/run-travis-yml/runs/1545656525?check_suite_focus=true#step:4:1
+[example-env]: https://github.com/ktomk/run-travis-yml/runs/1545656525?check_suite_focus=true#step:4:6
 
 ## Usage
+
+[Inputs](#inputs)
+| [Outputs](#outputs)
+| [Environment](#environment)
 
 ```yaml
   - name: Run .travis.yml build script
@@ -46,16 +51,51 @@ This projects [`.travis.yml`](.travis.yml) [running as Github Action][example].
       TRAVIS_PHP_VERSION: ${{ matrix.php-versions }}
 ```
 
-* (*optional*) **Path to `.travis.yml` file** can be specified `with:` `file:`
-  (by default `.travis.yml`).
-* (*optional*) **Stages to run** can be specified `with:` `stages:` as a space
-  separated list (by default [all custom stages][acs] are run).
-* (*optional*) **Allow failure** can be enabled `with:` `allow_failure: true`,
-  even if the `.travis.yml` file run exits non-zero, it will not fail.
-  Double check cache and artifacts configuration for side effects.
-  `TRAVIS_TEST_RESULT` environment variable has the scripts exit status.
-* **Environment variables** are likely incomplete (some are ported), add
-  missing ones or override your own, the `env:` is key.
+### Inputs
+* `file` (optional) Path to `.travis.yml` file (`.travis.yml` by default ).
+* `stages` (optional) Stages to run as a space separated list (by default
+  the following stages/steps are run: `setup`, `before_install`, `install`,
+  `before_script`, `script`, `after_script`, `before_deploy`).
+* `allow_failure` (optional) Allow failure set to `true` allows build
+  failures and to `false` to actually fail, which is the normal behaviour.
+  This failure behaviour can also be controlled by the
+  `TRAVIS_ALLOW_FAILURE` environment variable, the input overrides the
+  environment variable when set. Double check cache and artifacts
+  configuration for side effects and see `outputs.test_result` and
+  `outputs.outcome`.
+
+### Outputs
+* `test_result` Outcome of `TRAVIS_TEST_RESULT`, either `0` if all commands
+   in the `script` section have exited with zero or `1` otherwise.
+* `conclusion` The result of the .travis.yml build after `allow_failure`
+  / `TRAVIS_ALLOW_FAILURE` is applied. Possible values are `success` or
+  `failure`.
+* `outcome` The result of the .travis.yml build before `allow_failure`
+  / `TRAVIS_ALLOW_FAILURE` is applied. Possible values are `success` or
+  `failure`.
+
+### Environment
+`TRAVIS_*` environment variables are created by the action for a good start.
+These defaults can always be overridden with the typical steps `env:` key,
+missing ones can be added (e.g. the action can not infer the programming
+languages' versions so the according `TRAVIS_*_VERSION` need to be set etc.
+).
+
+At the beginning of the action run, the current state of the `TRAVIS_*`
+environment is shown for convenience. It also makes the given [defaults
+visible][example-env]:
+
+[![Travis Environment of a .travis.yml run in a Github Action](.github/assets/env-travis-yml.png)][example-env]
+
+Currently, three environment variables are exported, so they are available
+for further job steps:
+
+* `TRAVIS_ALLOW_FAILURE` - see `inputs.allow_failure`, `outputs.test_result`
+* `TRAVIS_TEST_RESULT` - see `outputs.test_result`
+* `TRAVIS_YAML_FILE` - see `inputs.file`
+
+This also allows to run the same file multiple times, e.g. different
+stages step-by-step.
 
 ## Notes
 * Lightweight port to support migrating travis-ci build scripts, your
@@ -68,14 +108,14 @@ This projects [`.travis.yml`](.travis.yml) [running as Github Action][example].
   first to get build minutes down, the matrix on Github is not affected by
   that.
 * Folding supported, Github just has no such nice labels thought.
-* Similar on Github for the timing information as nice as the
-  one on Travis-CI (the display on Travis CI is generally looking better to
-  me, also while the action is running, Github truncates log output).
-* First error in script is annotated. Further, following output folded to
-  keep things more visible within the Github log viewer.
-* Github has no allow-failure option when running action job steps. The
-  job-wide [`continue-on-error:`][coe] may help, see
-  [actions/toolkit#399][at-399] as well.
+* Similar on Github the timing information is not as nice as the
+  one on Travis-CI.
+* First error in script is annotated. If `TRAVIS_ALLOW_FAILURE` is `true`
+  the annotation is a warning, not an error. Further, following output
+  is folded to keep it better visible within the Github log viewer.
+* Github has no allow-failure option when running action job steps. Lukily
+  The ***Run .travis.yml Github Action*** has `TRAVIS_ALLOW_FAILURE`, see
+  `inputs.allow_failure` as well.
 
 ## Copying
 `AGPL-3.0-or-later` see [COPYING], `MIT` for files from *travis-build* see
@@ -83,6 +123,7 @@ This projects [`.travis.yml`](.travis.yml) [running as Github Action][example].
 
 ## Resources
 * [travis-ci/travis-build][TRAVIS-BUILD] - .travis.yml => build.sh converter
+* [Travis Default Environment Variables][TRAVIS-ENV]
 * [travis-ci/dpl](https://github.com/travis-ci/dpl) - Dpl (dee-pee-ell) is
   a deploy tool made for continuous deployment
 * [JoshCheek/travis-environment](https://github.com/JoshCheek/travis-environment
@@ -102,6 +143,7 @@ This projects [`.travis.yml`](.travis.yml) [running as Github Action][example].
 [LICENSE]: lib/ktomk/symfony-yaml/Symfony/Component/Yaml/LICENSE
 [TRAVIS-LICENSE]: lib/template/TRAVIS-LICENSE
 [TRAVIS-BUILD]: https://github.com/travis-ci/travis-build
+[TRAVIS-ENV]: https://docs.travis-ci.com/user/environment-variables/#default-environment-variables
 [acs]: https://github.com/travis-ci/travis-build/blob/master/lib/travis/build/stages.rb#L12-L65
 [at-399]: https://github.com/actions/toolkit/issues/399
 [badge.svg]: https://github.com/ktomk/run-travis-yml/workflows/CI/badge.svg

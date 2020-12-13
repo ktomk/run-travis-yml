@@ -1,6 +1,6 @@
 name: CI
 
-on: push
+on: [push, pull_request]
 
 jobs:
   test:
@@ -8,8 +8,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - {shell: bash,run: 'echo "$(whoami) on $(uname -a)"; echo "::group::sudo"; sudo -lU "$(whoami)"&&echo $?||echo $?; echo "::group::env"; set -o posix; set|sort'}
       - uses: actions/checkout@v2
       - run: test/shell.sh
+      - name: test action
+        uses: ./.
+        with:
+          file: test/.travis.yml
+
+      - name: test project .travis.yml action
+        uses: ./.
+        with:
+          allow_failure: true
+        env:
+          TRAVIS_YAML_FILE: .travis.yml
+
+  error:
+    name: allow failure
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v2
+      - id: self-error
+        uses: ./.
+        with:
+          allow_failure: true
+
+      - if: ${{ success() }}
+        shell: bash
+        run: test "${{ steps.self-error.outputs.outcome }}" = "failure"
 
   try-machine:
     name: run on ${{ matrix.machine }}
@@ -30,12 +57,8 @@ jobs:
         experimental: [false]
 
     steps:
+      - {shell: bash,run: 'echo "$(whoami) on $(uname -a)"; echo "::group::sudo"; sudo -lU "$(whoami)"&&echo $?||echo $?; echo "::group::env"; set -o posix; set|sort'}
       - uses: actions/checkout@v2
-      - name: run test .travis.yml
-        uses: ./.
-        with:
-          file: test/.travis.yml
-
       - name: run .travis.yml
         uses: ./.
         env:
