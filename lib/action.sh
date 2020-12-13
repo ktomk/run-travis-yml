@@ -10,6 +10,7 @@ gh_var TRAVIS_APP_HOST                         "$(hostname)"
 gh_var TRAVIS_BUILD_DIR                        "$GITHUB_WORKSPACE"
 gh_var TRAVIS_BUILD_ID                         "$GITHUB_RUN_ID"
 gh_var TRAVIS_BUILD_NUMBER                     "$GITHUB_RUN_NUMBER"
+gh_var TRAVIS_BUILD_WEB_URL                    "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_NUMBER"
 # TRAVIS_BRANCH:
 #  * for push builds, or builds not triggered by a pull request, this is the name of the branch.
 #             GITHUB_REF: The branch or tag ref that triggered the workflow. For example, refs/heads/feature-branch-1.
@@ -21,7 +22,6 @@ gh_var TRAVIS_BUILD_NUMBER                     "$GITHUB_RUN_NUMBER"
 #  * for builds triggered by a tag, this is the same as the name of the tag (TRAVIS_TAG).
 # Note: that for tags, git does not store the branch from which a commit was tagged.
 gh_var TRAVIS_BRANCH                           "$(gh_refname "${GITHUB_BASE_REF:-"${GITHUB_REF:?"either GITHUB_BASE_REF or GITHUB_REF expected"}"}")"
-# TRAVIS_BUILD_WEB_URL - URL build log
 gh_var TRAVIS_COMMIT                           "$GITHUB_SHA"
 # TRAVIS_COMMIT_MESSAGE
 # TRAVIS_COMMIT_RANGE

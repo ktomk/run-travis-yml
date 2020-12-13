@@ -10,6 +10,9 @@ export GITHUB_REF="refs/heads/test-branch"
 export GITHUB_RUN_ID=1
 export GITHUB_RUN_NUMBER=123
 export GITHUB_SHA=0000000000000000000000000000000000000000
+export GITHUB_REPOSITORY=ktomk/run-travis-yml
+export GITHUB_SERVER_URL=https://github.com.localhost
+
 export travis_file="${travis_file:-./test/.travis.yml}"
 export travis_stages="${travis_stages:-}"
 
