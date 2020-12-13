@@ -87,11 +87,15 @@ $cmd = function($command, $fold, $foldName) use (&$assert, $raw, $head1, $label)
 $result = function() use ($raw) {
     $raw(sprintf("travis_result \$?\n"));
 };
+$name = function($name) use ($raw) {
+    $raw(sprintf("export TRAVIS_BUILD_STAGE_NAME=%s\n", Lib::quoteArg($name)));
+};
 
-$runCustomStage = function ($stage) use ($config, $cmd, $result, &$assert) {
+$runCustomStage = function ($stage) use ($config, $name, $cmd, $result, &$assert) {
     $assert = in_array($stage, array('setup', 'before_install', 'install', 'before_script', 'before_deploy'), true);
     $fold = $stage !== 'script';
     $cmds = array_values($config[$stage]);
+    $name($stage);
     foreach ($cmds as $ix => $command) {
         $cmd($command, $fold, sprintf('%s%s', $stage, count($cmds) > 1 ? '.' . ($ix + 1) : ''));
         if (!$fold) {
