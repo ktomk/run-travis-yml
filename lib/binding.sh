@@ -18,6 +18,16 @@ gh_refname() {
   echo "${1#refs/*/}";
 }
 
+####
+# get sudo true/false
+gh_sudo() {
+  if sudo -nlU "$(whoami)">/dev/null 2>&1; then
+    printf 'true';
+  else
+    printf 'false';
+  fi
+}
+
 #####
 # input binding
 gh_input() {

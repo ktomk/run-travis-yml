@@ -32,6 +32,7 @@ gh_var TRAVIS_EVENT_TYPE                       "$(gh_eventname "${event_name?"ev
 #   ... needs review ... test pull request ...
 gh_var TRAVIS_PULL_REQUEST                     '' event_number
 gh_var TRAVIS_REPO_SLUG                        '' repository
+gh_var TRAVIS_SUDO                             "$(gh_sudo)"
 gh_var TRAVIS_YAML_FILE                        '.travis.yml' travis_file
 gh_var TRAVIS_YAML_TEST_FILE                   "$TRAVIS_YAML_FILE"
 
