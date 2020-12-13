@@ -1,6 +1,6 @@
 name: CI
 
-on: push
+on: [push, pull_request]
 
 jobs:
   test:
@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - {shell: bash,run: 'echo "$(whoami) on $(uname -a)"; echo "::group::sudo"; sudo -lU "$(whoami)"&&echo $?||echo $?; echo "::group::env"; set -o posix; set|sort'}
       - uses: actions/checkout@v2
       - run: test/shell.sh
       - name: test action
@@ -41,6 +42,7 @@ jobs:
         experimental: [false]
 
     steps:
+      - {shell: bash,run: 'echo "$(whoami) on $(uname -a)"; echo "::group::sudo"; sudo -lU "$(whoami)"&&echo $?||echo $?; echo "::group::env"; set -o posix; set|sort'}
       - uses: actions/checkout@v2
       - name: run .travis.yml
         uses: ./.
