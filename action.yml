@@ -30,11 +30,34 @@ inputs:
     default: ''
     required: false
 
+outputs:
+  test_result:
+    description: |
+      Outcome of `TRAVIS_TEST_RESULT`, either `0` if all commands
+      in the `script` section have exited with zero or `1`
+      otherwise.
+    value: ${{ steps.travis-build-sh.outputs.exit-status }}
+
+  conclusion:
+    description: |
+      The result of the .travis.yml build after `allow_failure`
+      / `TRAVIS_ALLOW_FAILURE` is applied. Possible values
+      are `success` or `failure`.
+    value: ${{ steps.travis-build-sh.outputs.conclusion }}
+
+  outcome:
+    description: |
+      The result of the .travis.yml build before `allow_failure`
+      / `TRAVIS_ALLOW_FAILURE` is applied. Possible values
+      are `success` or `failure`.
+    value: ${{ steps.travis-build-sh.outputs.outcome }}
+
 runs:
   using: composite
 
   steps:
-    - shell: bash
+    - id: travis-build-sh
+      shell: bash
       run: |
         : [1/3] action binding
         . "$GITHUB_ACTION_PATH"/lib/binding.sh

@@ -102,6 +102,25 @@ gh_close_export() {
   export gh_state_export_count=0
 }
 
+####
+# format true / false from mixed leaning towards "$2-false" if
+# neither true or false
+gh_fmt_bool_def() {
+  if [[ "$1" == "true" ]]; then
+    printf 'true';
+  elif [[ "$1" == "false" ]]; then
+    printf 'false';
+  else
+    printf '%s' "${2-false}";
+  fi
+}
+
+####
+# format success / failure from build result status
+gh_fmt_build_result() {
+  if [[ $1 -eq 0 ]]; then printf 'success'; else printf 'failure'; fi
+}
+
 #####
 # build build.sh file
 gh_build_run() {
@@ -116,6 +135,9 @@ gh_build_run() {
     export gh_build_result=$?
   set -e
   export TRAVIS_TEST_RESULT=$gh_build_result
+  # action output
+  printf '::set-output name=%s::%s\n' "exit-status" "$gh_build_result"
+  printf '::set-output name=%s::%s\n' "outcome" "$(gh_fmt_build_result "$gh_build_result")"
 }
 
 #####
@@ -125,6 +147,8 @@ gh_allow_failure() {
     printf '\e[33mTRAVIS_ALLOW_FAILURE\e[34m for build exit status \e[0m%s\n' "$gh_build_result"
     export gh_build_result=0 # silent
   fi
+  # action output
+  printf '::set-output name=%s::%s\n' "conclusion" "$(gh_fmt_build_result "$gh_build_result")"
 }
 
 #####

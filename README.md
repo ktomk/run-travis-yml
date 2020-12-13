@@ -46,16 +46,45 @@ This projects [`.travis.yml`](.travis.yml) [running as Github Action][example].
       TRAVIS_PHP_VERSION: ${{ matrix.php-versions }}
 ```
 
-* (*optional*) **Path to `.travis.yml` file** can be specified `with:` `file:`
-  (by default `.travis.yml`).
-* (*optional*) **Stages to run** can be specified `with:` `stages:` as a space
-  separated list (by default [all custom stages][acs] are run).
-* (*optional*) **Allow failure** can be enabled `with:` `allow_failure: true`,
-  even if the `.travis.yml` file run exits non-zero, it will not fail.
+### Inputs
+* `file` (*optional*) **Path to `.travis.yml` file** can be specified `with:`
+  `file:` (by default `.travis.yml`).
+* `stages` (*optional*) **Stages to run** can be specified `with:` `stages:` as
+  a spaceseparated list (by default [all custom stages][acs] are run).
+* `allow_failure` (*optional*) **Allow failure** can be enabled `with:`
+  `allow_failure: true`, even if the `.travis.yml` file run exits non-zero, it
+  will not fail.
   Double check cache and artifacts configuration for side effects.
-  `TRAVIS_TEST_RESULT` environment variable has the scripts exit status.
-* **Environment variables** are likely incomplete (some are ported), add
-  missing ones or override your own, the `env:` is key.
+
+### Outputs
+* `test_result` Outcome of `TRAVIS_TEST_RESULT`, either `0` if all commands
+   in the `script` section have exited with zero or `1` otherwise.
+* `conclusion` The result of the .travis.yml build after `allow_failure`
+  / `TRAVIS_ALLOW_FAILURE` is applied. Possible values are `success` or
+  `failure`.
+* `outcome` The result of the .travis.yml build before `allow_failure`
+  / `TRAVIS_ALLOW_FAILURE` is applied. Possible values are `success` or
+  `failure`.
+
+### Environment
+`TRAVIS_*` environment variables are created by the action for a good start.
+These defaults can always be overridden with the typical steps `env:` key,
+missing ones can be added (The runner does not infer the programming
+languages' versions so the according `TRAVIS_*_VERSION` need to be set).
+
+At the beginning of the action run, the current state of the `TRAVIS_*`
+environment is shown for convenience. This also makes the given defaults
+visible.
+
+Currently, three environment variables are exported, so they are available
+for further job steps:
+
+* `TRAVIS_ALLOW_FAILURE` - see `inputs.allow_failure`, `outputs.test_result`
+* `TRAVIS_TEST_RESULT` - see `outputs.test_result`
+* `TRAVIS_YAML_FILE` - see `inputs.file`
+
+This also allows to run the same file multiple times, e.g. different
+stages step-by-step.
 
 ## Notes
 * Lightweight port to support migrating travis-ci build scripts, your

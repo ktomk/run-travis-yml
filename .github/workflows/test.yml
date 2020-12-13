@@ -23,6 +23,21 @@ jobs:
         env:
           TRAVIS_YAML_FILE: .travis.yml
 
+  error:
+    name: allow failure
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v2
+      - id: self-error
+        uses: ./.
+        with:
+          allow_failure: true
+
+      - if: ${{ success() }}
+        shell: bash
+        run: test "${{ steps.self-error.outputs.outcome }}" = "failure"
+
   try-machine:
     name: run on ${{ matrix.machine }}
     runs-on: ${{ matrix.machine }}
