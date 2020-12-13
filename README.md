@@ -53,8 +53,8 @@ This projects [`.travis.yml`](.travis.yml) [running as Github Action][example-ru
 
 ### Inputs
 * `file` (optional) Path to `.travis.yml` file (`.travis.yml` by default ).
-* `stages` (optional) Stages to run as a space separated list (by default
-  the following stages/steps are run: `setup`, `before_install`, `install`,
+* `steps` (optional) Steps to run as a space separated list (by default
+  the following steps are run: `setup`, `before_install`, `install`,
   `before_script`, `script`, `after_script`, `before_deploy`).
 * `allow_failure` (optional) Allow failure set to `true` allows build
   failures and to `false` to actually fail, which is the normal behaviour.
@@ -124,6 +124,7 @@ stages step-by-step.
 ## Resources
 * [travis-ci/travis-build][TRAVIS-BUILD] - .travis.yml => build.sh converter
 * [Travis Default Environment Variables][TRAVIS-ENV]
+* [travis-ci/travis-conditions][TRAVIS-COND] - Boolean language for conditional builds, stages, jobs
 * [travis-ci/dpl](https://github.com/travis-ci/dpl) - Dpl (dee-pee-ell) is
   a deploy tool made for continuous deployment
 * [JoshCheek/travis-environment](https://github.com/JoshCheek/travis-environment

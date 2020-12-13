@@ -11,7 +11,10 @@
     }
   ],
   "autoload": {
-    "psr-4": {"Ktomk\\Pipelines\\": "lib/ktomk/pipelines"}
+    "psr-4": {
+      "Ktomk\\Pipelines\\": "lib/ktomk/pipelines",
+      "Ktomk\\TravisYml\\": "lib/travis-yml"
+    }
   },
   "config": {
     "autoloader-suffix": "RunTravisYml",

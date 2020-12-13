@@ -6,5 +6,6 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    'Ktomk\\TravisYml\\' => array($vendorDir . '/travis-yml'),
     'Ktomk\\Pipelines\\' => array($vendorDir . '/ktomk/pipelines'),
 );

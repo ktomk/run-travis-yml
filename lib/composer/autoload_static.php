@@ -9,11 +9,16 @@ class ComposerStaticInitRunTravisYml
     public static $prefixLengthsPsr4 = array (
         'K' => 
         array (
+            'Ktomk\\TravisYml\\' => 16,
             'Ktomk\\Pipelines\\' => 16,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
+        'Ktomk\\TravisYml\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/travis-yml',
+        ),
         'Ktomk\\Pipelines\\' => 
         array (
             0 => __DIR__ . '/..' . '/ktomk/pipelines',
@@ -30,12 +35,17 @@ class ComposerStaticInitRunTravisYml
         ),
     );
 
+    public static $classMap = array (
+        'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
+    );
+
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
             $loader->prefixLengthsPsr4 = ComposerStaticInitRunTravisYml::$prefixLengthsPsr4;
             $loader->prefixDirsPsr4 = ComposerStaticInitRunTravisYml::$prefixDirsPsr4;
             $loader->prefixesPsr0 = ComposerStaticInitRunTravisYml::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInitRunTravisYml::$classMap;
 
         }, null, ClassLoader::class);
     }

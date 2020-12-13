@@ -1,0 +1,145 @@
+os: linux
+dist: xenial
+
+language: php
+
+## Blocklist, allow tags only (for .travis.yml builds on Travis-CI)
+branches:
+  only:
+    - /^0\.\d+\.\d+$/ # Only 0.x.x versions, naming scheme of tags
+
+## Cache pipelines and composer
+cache:
+  directories:
+    - $HOME/.cache/pipelines
+    # Cache directory for older Composer versions.
+    - $HOME/.composer/cache/files
+    # Cache directory for more recent Composer versions.
+    - $HOME/.cache/composer/files
+
+## Pipelines needs docker
+services:
+  - docker
+
+git:
+  depth: 3
+
+php:
+  # - '7.4'
+  # - 'nightly'
+  # - '8.0snapshot'
+  # - '8.0'
+  # - '5.6'
+  # - '7.3'
+  - '7.2'
+  # - '7.1'
+  # - '7.0'
+  # - 'master'
+  #- '7.4snapshot'
+  #- '7.3snapshot'
+  #- '7.2snapshot'
+  #- '7.1snapshot'
+  #- '7.0snapshot'
+
+jobs:
+  fast_finish: true
+  allow_failures:
+    - php: '8.0snapshot' # xdebug 3.0.0 segfault/core dumps in unit tests
+    - php: '8.0' # php 8.0 missing on travis <https://travis-ci.community/t/php-8-0-missing/10132>
+    - php: '7.4' # xdebug 3.0.0 segfault/core dumps in unit tests
+    - php: '7.3' # xdebug 3.0.0 segfault/core dumps in unit tests
+    - php: 'master'
+    - php: 'nightly'
+    - php: '7.4snapshot'
+    - php: '7.3snapshot'
+    - php: '7.2snapshot'
+    - php: '7.1snapshot'
+    - php: '7.0snapshot'
+
+before_install:
+  - |
+    if [[ -n "$encrypted_a90e500b3cd1_key" ]]; then
+      openssl aes-256-cbc -K "$encrypted_a90e500b3cd1_key" -iv "$encrypted_a90e500b3cd1_iv" -in ktomk-phive-sign.gpg.enc -out ktomk-phive-sign.gpg -d
+      gpg --import ktomk-phive-sign.gpg
+      rm ktomk-phive-sign.gpg
+    fi
+  - composer self-update 1.10.17 # pin composer version for whole build
+
+## Install fitting phpunit version and remove PHP-CS-Fixer dev-dependencies if incompatible
+install:
+  - echo "${TRAVIS_PHP_VERSION}"
+  - ppconf() { ./lib/script/ppconf.sh "$@"; }; ppconf self-test
+  - |
+    if [[ "${TRAVIS_PHP_VERSION}" == 8.1*    ]] \
+    || [[ "${TRAVIS_PHP_VERSION}" == 8.0*    ]] \
+    || [[ "${TRAVIS_PHP_VERSION}" == nightly ]] \
+    || [[ "${TRAVIS_PHP_VERSION}" == master  ]]; then
+      # PHP-CS-Fixer n/a for PHP 8.0 yet, needs php version fake
+      # Hat-tip: Composer 1.10 and PHP 8 #9523 <https://github.com/composer/composer/issues/9523>
+      IGNORE_PLATFORM_REQS=--ignore-platform-reqs
+    fi
+  - |
+    if [[ "${TRAVIS_PHP_VERSION}" == 7.4*    ]] \
+    || [[ "${TRAVIS_PHP_VERSION}" == 7.3*    ]]; then ppconf patch-phpunit-tests phpunit ^8; fi
+  - if [[ "${TRAVIS_PHP_VERSION}" == 7.2*    ]]; then IGNORE_PLATFORM_REQS=--ignore-platform-reqs; ppconf phpunit ^7; fi
+  - if [[ "${TRAVIS_PHP_VERSION}" == 7.[01]* ]]; then IGNORE_PLATFORM_REQS=--ignore-platform-reqs; ppconf remove-dev all downpatch-phpunit-tests phpunit ^6; fi
+  - if [[ "${TRAVIS_PHP_VERSION}" == 5.6     ]]; then IGNORE_PLATFORM_REQS=--ignore-platform-reqs; ppconf remove-dev all downpatch-phpunit-tests phpunit ^5; fi
+  - echo "IGNORE_PLATFORM_REQS=${IGNORE_PLATFORM_REQS-}"
+  - composer install --no-interaction --no-suggest --no-progress ${IGNORE_PLATFORM_REQS-}
+  - vendor/bin/phpunit --version
+  # - bin/pipelines --images | while read -r image; do docker image pull "$image"; done; true;
+
+## Script
+#  [1]  phpunit (src)
+#  [2]  phar-build (src, clean)
+#  [3]  pipelines self-tests (src)
+#  [4]  default/custom pipelines (src)
+#  [5]  shell tests (src)
+script:
+  #  [1]  phpunit (src)
+  - composer phpunit
+  #  [2]  phar-build (src, clean)
+  - git stash # stash build configuration changes
+  - git reset --hard HEAD # reset for phar build
+  - composer build
+  - |
+    if [[ -z "${SIGNPHRASE-}" ]]; then
+      echo "no SIGNPHRASE, no build/pipelines.phar.asc"
+    else
+      echo "$SIGNPHRASE" | gpg --passphrase-fd 0 --output build/pipelines.phar.asc --detach-sig build/pipelines.phar
+      ls -al build/pipelines.phar.asc
+    fi
+  - 'git stash pop || :' # restore build configuration changes
+  - composer install --no-interaction --no-suggest --no-progress ${IGNORE_PLATFORM_REQS-}
+  #  [3]  pipelines self-tests (src)
+  - bin/pipelines --version
+  - bin/pipelines --verbose --debug --show
+  - bin/pipelines --verbose --validate # validate project pipelines.yml file
+  #  [4]  default/custom pipelines (src)
+  - bin/pipelines
+  - bin/pipelines --pipeline custom/docker
+  - bin/pipelines --pipeline custom/unit-tests
+  - travis_retry docker pull php:5.3 | grep 'php:5.3' || true # prefetch
+  - bin/pipelines --deploy mount --pipeline custom/lint-php
+  - bin/pipelines --pipeline custom/unit-tests-php-5.3
+  #  [5]  shell tests (src)
+  - test/shell/run.sh
+
+notifications:
+  email: false
+
+deploy:
+  provider: releases
+  token:
+    secure: 4xNiXhCoBqLy2CkocUjn2zPKFYr7xod3b02EQ0HG2qNPEJBt+DeZomcck7BsiMcbmbzfTy4vqHX+B5iWmiUMqniYiYwSs28TQYrj6mlY6nav6jfTAkQiLO2Wl/JbV/X1lLIFALGfWkbHgCpgqhF7aOTX9CazcAviqr3WD9CRctlibBTsSdyaBtG9tNrsbjlg4gY/DLBODD4vsbXWok1kXR7gQWy+DeXFvw5BAEOlmI8YP2mpByv7+iGuNSRXIP66xrrIP6OZWooSiNsiNTBcwmUwqu5Ax6QKnY+iWX7oXnzjUsW7JhHmh/dndK8+e/ejPQKjmqGNaJtRFIG+tHKq25Ql32yCmtXTPr1OcJSWtZLPrHLSlptjcVcjXUEoO28CDG3/+3ENcPp3lw3VqVwHb25ySJgLWusiINyYY9tsTZBzeIW5ez/NrPRkjPI8BmJbUSS2eopSPR93WkPF6FURnbLD+aWKPqV4Dj4wCZhldRt+gn0mNmSgm1b/YOUhnlKKctThujmobj5ymoHKQol2GlQwQhLc+J2qThSsw9CvtHUZ4ZXY/+ae/CSIZodcdyZD540YRJoamwiLxUragvOHkeuwjYCZWyw77gUc9jbZVXr8/SCHaA96pCRMwTWPDJYAKJ6jA7mUn9Xb7PxFJxWhFzwPKE8+JSkLTvWVa3JZ66Y=
+  file:
+    - build/pipelines.phar
+    - build/pipelines.phar.asc
+  on:
+    condition: '$TRAVIS_PHP_VERSION = 7.2'
+    tags: true
+    repo: ktomk/pipelines
+  edge: true
+env:
+  global:
+    secure: 2UP09p6h0NTe+Cwxl8d8d47b5MJjNjx6AmXIg+2zLRc+ggGBhbHAZMk/1TKf8n/j4g0OSXgikdRBkaSGkfQ1jHulWuenuRKwY9/C16lRTXUpcCRQxlHby3twyDBKWhhZs/2dH6iCtyMGi38qmhObh1pmcADrE81PqF6/HBDONIyd2e9m9+Ruq76mWciyiuybm62L0G1kQREphuBIHlCB3aF1hcuO64BcMCrpS5l1q04FQyFx0dOPBKe64HXAjxHOp5bZzAZMmQMhaCKapj+/WddQwyopWDGnqQGgba9nFzGLpb3i+wmWLJJF8QSnVQo4withoE4SzoOgu7fqnpw6s29gYQoJWZ+lT2AupQFQzn1EymvLp9GOco8Wabqc7x1Vl17g+cqlb7qGiYmWm059qmqi0FDs1W3SHrlnpaV4N373IL2pvwKY89yi70fo9M1jyetFezg1jugGKU46v/AjeJ1fKX+6/lxXH7nayke9gbd0GmI0I63r94eCFgy81fIMR7+4J2JhkdP131ZVZMdrgBIgUdPsdFzhTJcZAxZVxeiRy8xAOrlOXrjL9HvGbgcYqENdFEu/0lGeZLvd+W+MqwWfmBbtlLTDVlXoO6Y9VmGODLEePlKSXEiRwMta4zxwCMagzgx1+cNUrb9u09MLjKVlrIpyCG4MM33q0mSiJdg=

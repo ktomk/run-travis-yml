@@ -61,5 +61,17 @@ test "$(./lib/travis-script-builder.php -f test/.travis.yml "script
 foo-script  foo-bar-baz
 script" | grep -c '"hello world"')" -eq 3 # script executions
 
-: [6] execute build.sh script
-./test/action.sh
+: [6] execute build.sh script from test/.travis.yml
+# shellcheck disable=SC2069
+./test/action.sh 2>&1 >/dev/null
+
+: [7] standard action has exit status 1
+set +e
+# shellcheck disable=SC2069
+travis_file=.travis.yml ./test/action.sh >/dev/null
+result=$?
+set -e
+test $result -eq 1
+
+: [8] standard action must not fail with allow_failure
+travis_file=.travis.yml allow_failure=true ./test/action.sh >/dev/null

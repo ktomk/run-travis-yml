@@ -15,10 +15,20 @@ inputs:
     default: ''
     required: false
 
+  steps:
+    description: |
+      Space separated list of steps to run. Leave empty
+      / unset to run all custom steps.
+    default: ''
+    required: true
+
   stages:
     description: |
-      Space separated list of stages to run. Leave empty
-      / unset to run all custom stage scripts.
+      Deprecated: Space separated list of steps to run
+      (originally misnamed stages). Leave empty / unset to run
+      all custom steps. Use `inputs.steps` instead. Note:
+      `input.stages` might be re-used for different or just error
+      in a future version; change early.
     default: ''
     required: true
 
@@ -67,6 +77,7 @@ runs:
         reg  event_number       "${{ github.event.number }}"
         reg  repository         "${{ github.repository }}"
         reg  travis_file        "${{ inputs.file }}"
-        reg  travis_stages      "${{ inputs.stages }}"
+        reg  travis_steps       "${{ inputs.steps }}"
+        reg  travis_steps       "${{ inputs.stages }}"
         : [3/3] action
         . "$GITHUB_ACTION_PATH"/lib/action.sh

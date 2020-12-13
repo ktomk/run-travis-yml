@@ -14,8 +14,7 @@ export GITHUB_REPOSITORY=dr/run-yml
 export GITHUB_SERVER_URL=https://localhost
 
 export travis_file="${travis_file:-./test/.travis.yml}"
-export travis_stages="${travis_stages:-}"
-
+export travis_steps="${travis_steps:- }"
 
 err_report() {
   echo "test-action: errexit on line $(caller)" >&2
@@ -34,7 +33,8 @@ reg  event_name         '${{ github.event_name }}'
 reg  event_number       '${{ github.event.number }}'
 reg  repository         '${{ github.repository }}'
 reg  travis_file        '${{ inputs.file }}'
-reg  travis_stages      '${{ inputs.stages }}'
+reg  travis_steps       '${{ inputs.steps }}'
+reg  travis_steps       '${{ inputs.stages }}'
 : [3/3] action
 (
   set -euo pipefail

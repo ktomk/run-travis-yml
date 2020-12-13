@@ -37,7 +37,7 @@ gh_input() {
 #####
 # reg -> gh_input
 reg() {
-  gh_input "$1" "${!1-$2}"
+  gh_input "$1" "${!1:-$2}"
 };
 
 
@@ -127,7 +127,7 @@ gh_build_run() {
   gh_close_export
   # write build.sh
   "$GITHUB_ACTION_PATH"/lib/travis-script-builder.php \
-      --file "$TRAVIS_YAML_FILE" "${travis_stages:-}" \
+      --file "$TRAVIS_YAML_FILE" "${travis_steps:-}" \
       > "$GITHUB_ACTION_PATH"/build.sh
   # execute build.sh (error fence)
   set +e

@@ -1,6 +1,15 @@
 # .travis.yml test fixture
 ---
+env:
+  global:
+    - FOO=BAR
+    - BAZ=QUX
+
 script:
   - echo "hello world"
   - printenv | grep '^TRAVIS_' | sort
   - printenv | grep '^GITHUB_' | sort
+  - |
+    printf '::group::full-env\n'
+    printenv
+    printf '::endgroup::\n'

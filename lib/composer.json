@@ -1,0 +1,16 @@
+{
+  "description": "development dependencies",
+  "config": {
+    "vendor-dir": ".vendor"
+  },
+  "autoload": {
+    "psr-4": {
+      "Ktomk\\Pipelines\\": "ktomk/pipelines",
+      "Ktomk\\TravisYml\\": "travis-yml"
+    },
+    "psr-0": {"Symfony\\Component\\Yaml\\": ""}
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.5"
+  }
+}
