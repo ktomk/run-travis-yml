@@ -6,7 +6,7 @@ gh_var CI                                      true
 gh_var HAS_JOSH_K_SEAL_OF_APPROVAL             true
 gh_var HAS_ANTARES_THREE_LITTLE_FRONZIES_BADGE true
 gh_var TRAVIS_ALLOW_FAILURE                    false allow_failure
-# TRAVIS_APP_HOST - hostname of build-script compiling system - needs introspection on github runner
+gh_var TRAVIS_APP_HOST                         "$(hostname)"
 gh_var TRAVIS_BUILD_DIR                        "$GITHUB_WORKSPACE"
 gh_var TRAVIS_BUILD_ID                         "$GITHUB_RUN_ID"
 gh_var TRAVIS_BUILD_NUMBER                     "$GITHUB_RUN_NUMBER"
