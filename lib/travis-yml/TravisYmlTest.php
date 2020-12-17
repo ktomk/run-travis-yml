@@ -55,6 +55,10 @@ class TravisYmlTest extends TestCase
         $expected['os'] = Node::normalizeSequence($expected['os']);
         $actual = TravisYml::normalizeYaml(array('jobs' => array('language' => 'php')));
         self::assertSame($expected, $actual);
+
+        // matrix alias
+        $actual = TravisYml::normalizeYaml(array('matrix' => array('language' => 'php')));
+        self::assertSame($expected, $actual);
     }
 
     public function testBareCustomStepScripts()

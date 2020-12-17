@@ -30,7 +30,7 @@ class TravisYml
         'include' => array(),
         'exclude' => array(),
         'allow_failures' => array(),
-        'fast_finish' => array(),
+        'fast_finish' => false,
     );
 
     /**
@@ -146,6 +146,10 @@ class TravisYml
      */
     public static function normalizeYaml(array $yml = array())
     {
+        // step 0: root aliases
+        // the key 'matrix' is an alias for 'jobs', using 'jobs'
+        $yml = Node::filterAliasMap($yml, array('matrix' => 'jobs'));
+
         // step 1: defaults
         /** @noinspection AdditionOperationOnArraysInspection */
         $yml += self::$defaultYml;
@@ -225,42 +229,10 @@ class TravisYml
             $merge = Node::filterAliasMap($node, $alias);
             $merge = Node::normalizeMapEx($merge, $defaultPrefix, array_keys($env));
             $env = Node::mergeMapWithAlias($env, $merge, $alias);
-            $env['global'] = Node::normalizeSequence($env['global']);
-            $env['global'] = array_map(array(__CLASS__, 'envVariableNormalize'), $env['global']);
-            $env[$defaultPrefix] = array_map(array(__CLASS__, 'envVariableNormalize'), $env[$defaultPrefix]);
+            $env['global'] = EnvVar::normalize(Node::normalizeSequence($env['global']));
+            $env[$defaultPrefix] = EnvVar::normalize(Node::normalizeSequence($env[$defaultPrefix]));
         }
         return $env;
-    }
-
-    /**
-     * normalize environment variables for export
-     *
-     * @param array $envs
-     * @return array
-     */
-    public static function envVariables(array $envs)
-    {
-        $environ = array();
-        foreach ($envs as $env) {
-            if (is_string($env)) {
-                $environ[] = $env;
-                continue;
-            }
-            foreach($env as $k => $v) {
-                // quoting is inherited from yaml file ...
-                $environ[] = sprintf('%s=%s', $k, $v);
-            }
-        }
-        return $environ;
-    }
-
-    private static function envVariableNormalize($var)
-    {
-        if (is_string($var)) {
-            list($name, $value) = explode('=', $var, 2) + array(1 => null);
-            $var = array($name => $value);
-        }
-        return $var;
     }
 
     public static function jobsDefinition($node)
@@ -274,7 +246,6 @@ class TravisYml
             $jobs = Node::mergeMapWithAlias($jobs, $merge, $alias);
             $jobs['exclude'] = Node::normalizeSequence($jobs['exclude']);
             $jobs['allow_failures'] = Node::normalizeSequence($jobs['allow_failures']);
-            $jobs['fast_finish'] = Node::normalizeSequence($jobs['fast_finish']);
             $jobs = Node::mergeMapWithAlias($jobs, $merge);
         }
         return $jobs;
@@ -329,6 +300,7 @@ class TravisYml
 
         # at least one job is in file (the non-matrix matrix)
         $bare = $this->bareCustomStepScripts();
+        $list['default'] = $bare;
 
         # is there a matrix (normally langauge)
         $language = $this->language();
@@ -357,5 +329,21 @@ class TravisYml
     public function bareCustomStepScripts()
     {
         return array_intersect_key($this->yml, array_flip(self::$customSteps));
+    }
+
+    /**
+     * @return array
+     */
+    public function getDocument()
+    {
+        $yml = $this->yml;
+        // remove aliases (if not earlier)
+        unset(
+            $yml['matrix'], # jobs
+            $yml['env']['matrix'] # jobs
+        );
+        // move default keys to top
+        $yml = array_replace(self::$defaultYml, $yml);
+        return $yml;
     }
 }

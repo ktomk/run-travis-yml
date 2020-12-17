@@ -45,6 +45,24 @@ gh_state_export_count=0
 gh_state_export_stage=0
 
 #####
+# .travis.yml parse result
+gh_parse() {
+  gh_close_export
+  printf '::group::\e[90m[experimental]\e[0m parse+validate: \e[34m%s\e[0m ' "${TRAVIS_YAML_FILE:-.travis.yml}"
+  "$GITHUB_ACTION_PATH"/lib/travis-parse.php \
+      --file "$TRAVIS_YAML_FILE"
+}
+
+#####
+# .travis.yml plan of jobs result
+gh_plan() {
+  gh_close_export
+  printf '::group::\e[90m[experimental]\e[0m plan: \e[34m%s\e[0m\n' "${TRAVIS_YAML_FILE:-.travis.yml}"
+  "$GITHUB_ACTION_PATH"/lib/travis-plan.php \
+      --file "$TRAVIS_YAML_FILE"
+}
+
+#####
 # travis environment export
 gh_export() {
   if (( gh_state_export_count == 0 )); then
@@ -60,7 +78,11 @@ gh_export() {
   if [[ -z ${!1+x} ]]; then
     printf '  \e[90m%s\e[0m\n' "$1"
   else
-    printf '  %s: %s\n' "$1" "${!1}"
+    if [[ "$1" = "TRAVIS_COMMIT_MESSAGE" ]]; then
+      printf '  %s: %s\n' "$1" "$(echo "${!1}" | tr "\n\r" ".." | head -c 47)..." # beams subject line 50 chars recommendation
+    else
+      printf '  %s: %s\n' "$1" "${!1}"
+    fi
   fi
 
   # shellcheck disable=SC2163

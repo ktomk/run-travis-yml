@@ -43,7 +43,7 @@ This projects [`.travis.yml`](.travis.yml) [running as Github Action][example-ru
     uses: ktomk/run-travis-yml@v1
     with:
       file: .travis.yml
-      stages: |
+      steps: |
         install
         script
       allow_failure: false
@@ -124,6 +124,7 @@ stages step-by-step.
 ## Resources
 * [travis-ci/travis-build][TRAVIS-BUILD] - .travis.yml => build.sh converter
 * [Travis Default Environment Variables][TRAVIS-ENV]
+* [travis-ci/travis-yml][TRAVIS-YAML] - Travis CI build config processing
 * [travis-ci/travis-conditions][TRAVIS-COND] - Boolean language for conditional builds, stages, jobs
 * [travis-ci/dpl](https://github.com/travis-ci/dpl) - Dpl (dee-pee-ell) is
   a deploy tool made for continuous deployment
@@ -145,6 +146,7 @@ stages step-by-step.
 [TRAVIS-LICENSE]: lib/template/TRAVIS-LICENSE
 [TRAVIS-BUILD]: https://github.com/travis-ci/travis-build
 [TRAVIS-ENV]: https://docs.travis-ci.com/user/environment-variables/#default-environment-variables
+[TRAVIS-YAML]: https://github.com/travis-ci/travis-yml
 [acs]: https://github.com/travis-ci/travis-build/blob/master/lib/travis/build/stages.rb#L12-L65
 [at-399]: https://github.com/actions/toolkit/issues/399
 [badge.svg]: https://github.com/ktomk/run-travis-yml/workflows/CI/badge.svg

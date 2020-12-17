@@ -17,8 +17,7 @@
  */
 
 use Ktomk\Pipelines\Lib;
-use Ktomk\Pipelines\Yaml\Yaml as Yaml;
-use Ktomk\TravisYml\Node;
+use Ktomk\TravisYml\EnvVar;
 use Ktomk\TravisYml\TravisYml;
 
 require __DIR__ . '/autoload.php';
@@ -102,7 +101,7 @@ $envGlobal = function(array $env) use ($raw, $cmd) {
     }
     $globals = $env['global'];
     $raw(sprintf("\necho -e \"\\n\${ANSI_YELLOW}Setting environment variables from %s\${ANSI_RESET}\"\n", '.travis.yml'));
-    foreach (TravisYml::envVariables($globals) as $line) {
+    foreach (EnvVar::exportMapSequence($globals) as $line) {
         $command = sprintf("export %s", $line);
         $cmd($command, false, '');
     }

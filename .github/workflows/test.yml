@@ -56,9 +56,6 @@ jobs:
           - macos-11.0
           - windows-2019
         experimental: [false]
-        include:
-          - machine: macos-10.13
-            experimental: true
 
     steps:
       - {shell: bash,run: 'echo "$(whoami) on $(uname -a)"; echo "::group::sudo"; sudo -lU "$(whoami)"&&echo $?||echo $?; echo "::group::env"; set -o posix; set|sort'}

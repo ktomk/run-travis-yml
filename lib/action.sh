@@ -2,17 +2,21 @@
 
 ### travis environment variables
 
+gh_var TRAVIS                                  true
 gh_var CI                                      true
+gh_var CONTINUOUS_INTEGRATION                  true
+gh_var PAGER                                   "cat"
 gh_var HAS_JOSH_K_SEAL_OF_APPROVAL             true
-gh_var HAS_ANTARES_THREE_LITTLE_FRONZIES_BADGE true
+gh_var HAS_ANTARES_THREE_LITTLE_FRONZIES_BADGE true  #  n/a in travis-build master; noted for soft-deprecation
 gh_var TRAVIS_ALLOW_FAILURE                    false allow_failure
 gh_var TRAVIS_APP_HOST                         "$(hostname)"
 gh_var TRAVIS_BUILD_DIR                        "$GITHUB_WORKSPACE"
 gh_var TRAVIS_BUILD_ID                         "$GITHUB_RUN_ID"
 gh_var TRAVIS_BUILD_NUMBER                     "$GITHUB_RUN_NUMBER"
-gh_var TRAVIS_BUILD_WEB_URL                    "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+gh_var TRAVIS_BUILD_WEB_URL                    "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_NUMBER"
 gh_var TRAVIS_BRANCH                           "$(gh_refname "${GITHUB_BASE_REF:-"${GITHUB_REF:?"either GITHUB_BASE_REF or GITHUB_REF expected"}"}")"
 gh_var TRAVIS_COMMIT                           "$GITHUB_SHA"
+gh_var TRAVIS_COMMIT_MESSAGE                   "$(test -d .git && git log --format=%B -n 1 | head -c 32768)"
 gh_var TRAVIS_EVENT_TYPE                       "$(gh_eventname "${event_name?"event_name expected"}")"
 gh_var TRAVIS_PULL_REQUEST                     false event_number
 gh_var TRAVIS_REPO_SLUG                        '' repository
@@ -24,13 +28,17 @@ gh_var TRAVIS_YAML_FILE                        '.travis.yml' travis_file
 # travis default environment variables (long lists following)
 #
 # link: <https://docs.travis-ci.com/user/environment-variables/#default-environment-variables>
+# file: travis-ci/travis-build/lib/travis/build/env/builtin.rb
 #
 # excluded:
 #   TRAVIS_BUILD_STAGE_NAME (internal)
 #   TRAVIS_TEST_RESULT      (internal)
 gh_env \
 """
+TRAVIS
 CI
+CONTINUOUS_INTEGRATION
+PAGER
 HAS_JOSH_K_SEAL_OF_APPROVAL
 HAS_ANTARES_THREE_LITTLE_FRONZIES_BADGE
 TRAVIS_ALLOW_FAILURE
@@ -90,6 +98,8 @@ TRAVIS_YAML_FILE
 
 ### write/run .travis.yml, process results and finish
 
+gh_parse
+gh_plan
 gh_build_run
 gh_allow_failure
 
