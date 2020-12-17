@@ -145,6 +145,7 @@ stages step-by-step.
 [LICENSE]: lib/ktomk/symfony-yaml/Symfony/Component/Yaml/LICENSE
 [TRAVIS-LICENSE]: lib/template/TRAVIS-LICENSE
 [TRAVIS-BUILD]: https://github.com/travis-ci/travis-build
+[TRAVIS-COND]: https://github.com/travis-ci/travis-conditions/
 [TRAVIS-ENV]: https://docs.travis-ci.com/user/environment-variables/#default-environment-variables
 [TRAVIS-YAML]: https://github.com/travis-ci/travis-yml
 [acs]: https://github.com/travis-ci/travis-build/blob/master/lib/travis/build/stages.rb#L12-L65
