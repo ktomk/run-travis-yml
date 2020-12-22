@@ -1,6 +1,9 @@
-# run .travis.yml - source binding for action.yml run script
+# run .travis.yml
+#
+# binding.sh - source binding for action.yml action and environment scripts
+#
 
-export TRAVIS_YAML_ERROR_COUNT=0
+TRAVIS_YAML_ERROR_COUNT=0
 
 #####
 # get eventname
@@ -31,7 +34,7 @@ gh_sudo() {
 #####
 # input binding
 gh_input() {
-  export "$1"="$2"
+  eval "$1"=\'"$2"\'
 }
 
 #####
@@ -48,18 +51,21 @@ gh_state_export_stage=0
 # .travis.yml parse result
 gh_parse() {
   gh_close_export
-  printf '::group::\e[90m[experimental]\e[0m parse+validate: \e[34m%s\e[0m ' "${TRAVIS_YAML_FILE:-.travis.yml}"
+  printf '::group::\e[90m[info]\e[0m parse+validate: \e[34m%s\e[0m ' "$TRAVIS_YAML_FILE"
   "$GITHUB_ACTION_PATH"/lib/travis-parse.php \
-      --file "$TRAVIS_YAML_FILE"
+      --file "$TRAVIS_YAML_FILE" \
+      ;
 }
 
 #####
 # .travis.yml plan of jobs result
 gh_plan() {
   gh_close_export
-  printf '::group::\e[90m[experimental]\e[0m plan: \e[34m%s\e[0m\n' "${TRAVIS_YAML_FILE:-.travis.yml}"
+  printf '::group::\e[90m[info]\e[0m plan: \e[34m%s\e[0m\n' "$TRAVIS_YAML_FILE"
   "$GITHUB_ACTION_PATH"/lib/travis-plan.php \
-      --file "$TRAVIS_YAML_FILE"
+      --file "$TRAVIS_YAML_FILE" \
+      --run-job "${run_job-}" \
+      ;
 }
 
 #####
@@ -67,9 +73,9 @@ gh_plan() {
 gh_export() {
   if (( gh_state_export_count == 0 )); then
     if (( gh_state_export_stage == 0 )); then
-      printf '::group::env: \e[34m%s\e[0m\n' "${TRAVIS_YAML_FILE:-.travis.yml}"
+      printf '::group::\e[90m[info]\e[0m env: \e[34m%s\e[0m\n' "$TRAVIS_YAML_FILE"
     else
-      printf '::group::env: \e[34m%s\e[0m (post)\n' "${TRAVIS_YAML_FILE:-.travis.yml}"
+      printf '::group::\e[90m[info]\e[0m env: \e[34m%s\e[0m (post)\n' "$TRAVIS_YAML_FILE"
     fi
     (( ++gh_state_export_stage ))
   fi
@@ -147,13 +153,24 @@ gh_fmt_build_result() {
 # build build.sh file
 gh_build_run() {
   gh_close_export
+
+  if [[ "${dry_run_job-}" == "true" ]]; then
+    set -- --dry-run
+  fi
+
   # write build.sh
-  "$GITHUB_ACTION_PATH"/lib/travis-script-builder.php \
-      --file "$TRAVIS_YAML_FILE" "${travis_steps:-}" \
-      > "$GITHUB_ACTION_PATH"/build.sh
+  if ! "$GITHUB_ACTION_PATH/lib/travis-script-builder.php" \
+      --file "$TRAVIS_YAML_FILE" \
+      --run-job "${run_job:-}" \
+      "$@" \
+      "${travis_steps:-}" \
+      > "$GITHUB_ACTION_PATH/build.sh";
+  then
+    exit 1
+  fi
   # execute build.sh (error fence)
   set +e
-    /bin/bash "$GITHUB_ACTION_PATH"/build.sh
+    /bin/bash "$GITHUB_ACTION_PATH/build.sh"
     export gh_build_result=$?
   set -e
   export TRAVIS_TEST_RESULT=$gh_build_result
@@ -196,7 +213,6 @@ gh_travis_result_error() {
   fi
 
   printf '::%s file=%s::.travis.yml: The command %q exited with %s.\n' \
-      "$type" "${TRAVIS_YAML_FILE-.travis.yml}" "$TRAVIS_CMD" "$result"
+      "$type" "$TRAVIS_YAML_FILE" "$TRAVIS_CMD" "$result"
   printf '::group::\e[34m%s\e[0m\n' "after error continuation"
 }
-export -f gh_travis_result_error

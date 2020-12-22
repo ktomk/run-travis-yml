@@ -63,6 +63,11 @@ This projects [`.travis.yml`](.travis.yml) [running as Github Action][example-ru
   environment variable when set. Double check cache and artifacts
   configuration for side effects and see `outputs.test_result` and
   `outputs.outcome`.
+* `run_job` (optional) Name of the run-job. Possible values are the ones the
+  plan is listing. By default, the original root step-scripts are in use. If
+  a job has a name, it can be used as well.
+* `dry_run_job` (optional) Dry-run the run-job. Possible values are `true`
+  and `false`.
 
 ### Outputs
 * `test_result` Outcome of `TRAVIS_TEST_RESULT`, either `0` if all commands
@@ -100,7 +105,7 @@ stages step-by-step.
 ## Notes
 * Lightweight port to support migrating travis-ci build scripts, your
   mileage may vary.
-* Running the stage(s) as build script based on the original
+* Run one of the build jobs as a build script based on the original
   [`travis-build`][TRAVIS-BUILD].
 * Custom stages only (no matrix, deployment, after_success etc.), this needs
   additional matrix/actions in your workflow (checkout, VM setup, services,
@@ -113,9 +118,57 @@ stages step-by-step.
 * First error in script is annotated. If `TRAVIS_ALLOW_FAILURE` is `true`
   the annotation is a warning, not an error. Further, following output
   is folded to keep it better visible within the Github log viewer.
-* Github has no allow-failure option when running action job steps. Lukily
+* Github has no allow-failure option when running action job steps. Luckily
   The ***Run .travis.yml Github Action*** has `TRAVIS_ALLOW_FAILURE`, see
   `inputs.allow_failure` as well.
+
+### Supported / Not
+
+This action setups environment variables specified in the `.travis.yml` file
+and then runs *one* of the (potentially) many build jobs within the test
+build stage. Which job to run needs to be specified by the `run_job` input,
+it is not automatically selected (previous versions of the action did only
+run the bare job with no environment variable support). The *plan* shows
+all run-jobs in the `.travis-yml` file.
+
+With the job to run, steps of the job (e.g. `before_install`, `install`)
+etc. can be optionally specified by the `steps` input so that it is possible
+to skip unwanted steps.
+
+Travis internal steps like `setup` that would set up the virtual build
+environment are not supported. Support for languages is limited, too,
+insofar that there are no default steps defined, e.g. `phpunit` as `script`
+for `language` `php` is not defined and if used on Travis-CI should be
+added to the `.travis.yml` file explicitly to just work.
+
+The deploy build stage is not specifically supported.
+
+Maybe at this point it's better for orientation to write more clearly what
+this action does not. Most of these limitations are by design, the action
+concentrates on running the script of various build jobs first and not
+setting up the virtualization environment which would require specific
+knowledge of the VMs of which Github takes care of - and in a migration
+needs to be done most often individually as well unless a full port of the
+Travis-CI build is done, perhaps first for the Ubuntu virtual machine
+environments on Github (please see [travis-build on Github][TRAVIS-BUILD]).
+
+This may reduce the out-of-the box experience but on the other hand gives
+flexibility for a migration. There are other existing Github actions that do
+a better job for language specific setups or deployments than this action in
+its current form could do.
+
+* No (language specific) setup, incl. not setting up matrix specific default
+  environment variables that are specific to the language
+  (`TRAVIS_*_VERSION`).
+* No computing platform setup (Architecture `arch`, OS `os`, Distribution
+  `dist` and OSX image `osx_image`) support.
+* No software installations/configurations (`compiler`, `addons`, deprecated
+  `sudo`, `addons`, `cache`, `services` etc.).
+* No conditionals on build script (`if`, `branches`) and in broader sense
+  `exclude` - these are not evaluated. Also, yet no support for the two
+  conditional steps `after_success` and `after_failure`.
+* No `deploy` build stage / no deployment support. Deployments share with
+ `addons`, no concept for it yet.
 
 ## Copying
 `AGPL-3.0-or-later` see [COPYING], `MIT` for files from *travis-build* see

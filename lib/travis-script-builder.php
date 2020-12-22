@@ -17,47 +17,30 @@
  */
 
 use Ktomk\Pipelines\Lib;
+use Ktomk\TravisYml\Args;
 use Ktomk\TravisYml\EnvVar;
+use Ktomk\TravisYml\Node;
 use Ktomk\TravisYml\TravisYml;
 
 require __DIR__ . '/autoload.php';
 
-# --file option and argument
-$defaultFile = getenv('TRAVIS_YAML_FILE') ?: '.travis.yml';
-$file = $defaultFile;
-if (isset($argv[1]) && in_array($argv[1], array('-f', '--file'), true)) {
-    if (!isset($argv[2])) {
-        fprintf(STDERR, "fatal: %s needs an argument\n", $argv[1]);
-        exit(1);
-    }
-    $file = $argv[2];
-    array_splice($argv, 1, 2);
-}
+Args::create($argv)
+    ->env('TRAVIS_YAML_FILE', $defaultFile, '.travis.yml')
+    ->optArg(array('-f', '--file'), $file, $defaultFile)
+    ->optArg(array('--run-job'), $runJob, '')
+    ->optFlag(array('--dry-run'), $dryRun)
+    ->opStage($stages, TravisYml::$customSteps);
 
-# stage operands
-$stageNames = TravisYml::$customSteps;
-if (isset($argv[1]) && '' !== trim($argv[1])) {
-    $stages = array_reduce(array_splice($argv, 1), function ($carry, $item) {
-        return array_merge($carry, array_filter(preg_split('~[^a-z_]+~i', $item)));
-    }, array());
-} else {
-    $stages = $stageNames;
-}
 # the original implementations flaw to confluent steps w/ stages
 # allows to forward port to actually select job/stage etc.
 $steps = TravisYml::filterSteps($stages);
 
 # load .travis.yml file
-try {
-    $config = TravisYml::openFile($file);
-} catch (Exception $e) {
-    fprintf(STDERR, "fatal: %s\n", $e->getMessage());
-    exit(1);
-}
+$config = Args::loadConfig($file);
 
 # the original implementations flaw to confluent the config w/ job
 # allows to forward port to actual jobs
-$jobStepScripts = $config->bareCustomStepScripts();
+$job = Args::runJob($config, $runJob);
 
 # render bash.sh script (rest)
 $assert = false;
@@ -77,12 +60,13 @@ $label = function($text) {
     return sprintf("\033[34m%s%s\033[0m\033[34m%s\033[0m",
         "$punct$nbsp", $text,"$nbsp$punct");
 };
-$cmd = function($command, $fold, $foldName) use (&$assert, $raw, $head1, $label) {
+$cmd = function($command, $fold, $foldName, $dryRun = false) use (&$assert, $raw, $head1, $label) {
     $echo = '--echo';
     $args = array(
         $command,
         $assert ? '--assert' : null,
         array(&$echo, '--timing'),
+        $dryRun ? '--noexec' : null,
     );
     if ($fold) {
         $echo = '--echonp2';
@@ -95,27 +79,31 @@ $cmd = function($command, $fold, $foldName) use (&$assert, $raw, $head1, $label)
 $result = function() use ($raw) {
     $raw(sprintf("travis_result \$?\n"));
 };
-$envGlobal = function(array $env) use ($raw, $cmd) {
-    if (!$env['global']) {
+$envJob = function(array $job) use ($raw, $cmd) {
+    if (empty($job['env'])) {
         return;
     }
-    $globals = $env['global'];
+    $env = $job['env'];
     $raw(sprintf("\necho -e \"\\n\${ANSI_YELLOW}Setting environment variables from %s\${ANSI_RESET}\"\n", '.travis.yml'));
-    foreach (EnvVar::exportMapSequence($globals) as $line) {
+    foreach (EnvVar::exportMapSequence($env) as $var => $line) {
         $command = sprintf("export %s", $line);
+        if (false !== $val = getenv($var)) {
+            $command = sprintf('# already set: %s=%s ; in .travis.yml: %s', $var, $val, $line);
+        }
         $cmd($command, false, '');
     }
     $raw("printf '\n'\n");
 };
-$nameBuildStage = function($name) use ($raw) {
-    $raw(sprintf("export TRAVIS_BUILD_STAGE_NAME=%s\n", Lib::quoteArg(ucfirst(strtolower($name)))));
+$nameBuildStage = function(array $job) use ($raw) {
+    $name = Node::item($job, 'stage', 'test');
+    $raw(sprintf("export TRAVIS_BUILD_STAGE_NAME=%s\n", Lib::quoteArg(TravisYml::fmtBuildStageName($name))));
 };
-$runCustomStep = function ($stage) use ($jobStepScripts, $cmd, $result, &$assert) {
+$runCustomStep = function ($stage, $dryRun = false) use ($job, $cmd, $result, &$assert) {
     $assert = in_array($stage, array('setup', 'before_install', 'install', 'before_script', 'before_deploy'), true);
     $fold = $stage !== 'script';
-    $commands = array_values($jobStepScripts[$stage]);
+    $commands = array_values($job[$stage]);
     foreach ($commands as $ix => $command) {
-        $cmd($command, $fold, sprintf('%s%s', $stage, count($commands) > 1 ? '.' . ($ix + 1) : ''));
+        $cmd($command, $fold, sprintf('%s%s', $stage, count($commands) > 1 ? '.' . ($ix + 1) : ''), $dryRun);
         if (!$fold) {
             $result();
         }
@@ -123,9 +111,9 @@ $runCustomStep = function ($stage) use ($jobStepScripts, $cmd, $result, &$assert
 };
 
 $raw(file_get_contents(__DIR__ . '/template/header.sh'));
-$envGlobal($config->env());
-$nameBuildStage('test');
+$envJob($job);
+$nameBuildStage($job);
 foreach ($steps as $ix => $step) {
-    isset($jobStepScripts[$step]) && $runCustomStep($step);
+    isset($job[$step]) && $runCustomStep($step, $dryRun);
 }
 $raw(file_get_contents(__DIR__ . '/template/footer.sh'));

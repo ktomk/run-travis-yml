@@ -11,7 +11,7 @@ TRAVIS_TEST_RESULT=
 TRAVIS_CMD=
 
 function travis_cmd() {
-  local assert output outnp2 display retry timing cmd result
+  local assert output outnp2 noexec display retry timing cmd result
 
   cmd=$1
   TRAVIS_CMD=$cmd
@@ -22,6 +22,7 @@ function travis_cmd() {
       --assert)  assert=true; shift ;;
       --echo)    output=true; shift ;;
       --echonp2) outnp2=true; shift ;;
+      --noexec)  noexec=true; shift ;;
       --display) display=$2;  shift 2;;
       --retry)   retry=true;  shift ;;
       --timing)  timing=true; shift ;;
@@ -39,12 +40,17 @@ function travis_cmd() {
     printf '$ %s\n' "${display:-$cmd}"
   fi
 
-  if [[ -n "$retry" ]]; then
-    travis_retry eval "$cmd"
+  if [[ -z "$noexec" ]]; then
+    if [[ -n "$retry" ]]; then
+      travis_retry eval "$cmd"
+    else
+      eval "$cmd"
+    fi
+    result=$?
   else
-    eval "$cmd"
+    echo "dry-run, skipping command execution with exit status 0"
+    result=0
   fi
-  result=$?
 
   if [[ -n "$timing" ]]; then
     travis_time_finish

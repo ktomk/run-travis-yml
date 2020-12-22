@@ -103,12 +103,12 @@ class Node
     {
         $buffer = $value;
         // normalize map to default prefix, if no default prefix, this is NULL then
-        if (is_array($buffer) && Node::arrayIsMap($buffer)) {
-            $buffer = Node::item($buffer, $defaultPrefixKey);
+        if (is_array($buffer) && self::arrayIsMap($buffer)) {
+            $buffer = self::item($buffer, $defaultPrefixKey);
         }
         // any sequence will have it's first
-        if (is_array($buffer) && Node::arrayIsSequence($value)) {
-            $buffer = Node::item($buffer, 0);
+        if (is_array($buffer) && self::arrayIsSequence($value)) {
+            $buffer = self::item($buffer, 0);
         }
 
         return null === $buffer ? $buffer : (string) $buffer;
@@ -173,24 +173,6 @@ class Node
         return $map;
     }
 
-
-    /**
-     * set map aliases
-     *
-     * implementation is with PHP aliases
-     *
-     * @param array $map
-     * @param array $aliases alias => original
-     * @return array
-     */
-    public static function aliasMap(array $map, $aliases = array())
-    {
-        foreach ($aliases as $alias => $original) {
-            $map[$alias] = &$map[$original];
-        }
-        return $map;
-    }
-
     /**
      * merge two maps while resolving alias keys already
      *
@@ -217,21 +199,96 @@ class Node
      * guarded array traversal
      *
      * @param array $from
-     * @param string|int|string[]|int[]|array $key
+     * @param string|int|string[]|int[]|array $keyOrKeys
      * @param null $default
      * @return array|mixed|null
      */
-    public static function item(array $from, $key, $default = null)
+    public static function item(array $from, $keyOrKeys, $default = null)
     {
-        is_array($key) || $key = array($key);
+        $keys = is_array($keyOrKeys) ? $keyOrKeys : array($keyOrKeys);
         $top = $from;
-        foreach($key as $item) {
-            if (!array_key_exists($item, $top)) {
+        foreach($keys as $key) {
+            if (!isset($top[$key])) {
                 return $default;
             }
-            $top = $top[$item];
+            $top = $top[$key];
         }
         return $top;
+    }
+
+    /**
+     * conditional append one sequence to another from one map to the other
+     *
+     * if $into[$key] is not set (e.g. NULL) will be turned into an empty sequence
+     *
+     * @param array $into
+     * @param $key
+     * @param array $from
+     * @return array
+     */
+    public static function append(array $into, $key, array $from)
+    {
+        if (!isset($into[$key])) {
+            $into[$key] = array();
+        }
+
+        if (array_key_exists($key, $from) && is_array($from[$key]) && is_array($into[$key])) {
+            foreach ($from[$key] as $item) {
+                $into[$key][] = $item;
+            }
+        }
+
+        return $into;
+    }
+
+    /**
+     * conditional copy of one or more keys
+     *
+     * @param array $into
+     * @param string|int|string[]|array $keyOrKeys one or more keys to copy
+     * @param array $from
+     * @return array
+     */
+    public static function copy(array $into, $keyOrKeys, array $from)
+    {
+        $keys = is_array($keyOrKeys) ? $keyOrKeys : array($keyOrKeys);
+        foreach ($keys as $key) {
+            if (!array_key_exists($key, $from)) {
+                continue;
+            }
+            $into[$key] = $from[$key];
+        }
+
+        return $into;
+    }
+
+    public static function copyNormalizeSequence(array $into, $keyOrKeys, array $from)
+    {
+        $keys = is_array($keyOrKeys) ? $keyOrKeys : array($keyOrKeys);
+        foreach ($keys as $key) {
+            if (!array_key_exists($key, $from)) {
+                continue;
+            }
+            $into[$key] = self::normalizeSequence($from[$key]);
+        }
+
+        return $into;
+    }
+
+    /**
+     * remove elements from array by key(s)
+     *
+     * @param array $from
+     * @param int|string|string[]|int[]|array $keyOrKeys
+     * @return array
+     */
+    public static function remove(array $from, $keyOrKeys)
+    {
+        $keys = is_array($keyOrKeys) ? $keyOrKeys : array($keyOrKeys);
+        foreach ($keys as $key) {
+            unset($from[$key]);
+        }
+        return $from;
     }
 
     /**

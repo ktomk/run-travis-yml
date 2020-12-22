@@ -1,0 +1,102 @@
+name: run .travis.yml - extra plan action
+author: Tom Klingenberg <https://github.com/ktomk>
+description: |
+  Plan run `.travis.yml` as Github Action
+
+branding:
+  color: yellow
+  icon: shuffle
+
+inputs:
+  file:
+    description: |
+      Path to `.travis.yml` file. Leave empty / unset for default
+      `.travis.yml`. Relative to project root. Overrides the
+      `TRAVIS_YAML_FILE` environment variable if non-empty.
+    default: ''
+    required: false
+
+  steps:
+    description: |
+      Space separated list of steps to run. Leave empty
+      / unset to run all custom steps.
+    default: ''
+    required: true
+
+  stages:
+    description: |
+      Deprecated: Space separated list of steps to run
+      (originally misnamed stages). Leave empty / unset to run
+      all custom steps. Use `inputs.steps` instead. Note:
+      `input.stages` might be re-used for different or just error
+      in a future version; change early.
+    default: ''
+    required: true
+
+  allow_failure:
+    description: |
+      Allow the .travis.yml build to fail. Possible values are
+      `true` and `false`. Overrides the `TRAVIS_ALLOW_FAILURE`
+      environment variable if set.
+    default: ''
+    required: false
+
+  run_job:
+    description: |
+      Name of the run-job. Possible values are the ones the
+      plan is listing. By default, the original root step-scripts
+      are in use. If a job has a name, it can be used as well.
+    default: ''
+    required: false
+
+  dry_run_job:
+    description: |
+      Dry-run the run-job. Possible values are `true` and
+      `false`.
+    default: ''
+    required: false
+
+outputs:
+  test_result:
+    description: |
+      Outcome of `TRAVIS_TEST_RESULT`, either `0` if all commands
+      in the `script` section have exited with zero or `1`
+      otherwise.
+    value: ${{ steps.travis-build-sh.outputs.exit-status }}
+
+  conclusion:
+    description: |
+      The result of the .travis.yml build after `allow_failure`
+      / `TRAVIS_ALLOW_FAILURE` is applied. Possible values
+      are `success` or `failure`.
+    value: ${{ steps.travis-build-sh.outputs.conclusion }}
+
+  outcome:
+    description: |
+      The result of the .travis.yml build before `allow_failure`
+      / `TRAVIS_ALLOW_FAILURE` is applied. Possible values
+      are `success` or `failure`.
+    value: ${{ steps.travis-build-sh.outputs.outcome }}
+
+runs:
+  using: composite
+
+  steps:
+    - id: travis-build-sh
+      shell: bash
+      run: |
+        GITHUB_ACTION_PATH="$GITHUB_ACTION_PATH/../.."
+        : [1/3] action binding
+        . "$GITHUB_ACTION_PATH"/lib/binding.sh
+        : [2/3] register action context
+        reg  allow_failure      "${{ inputs.allow_failure }}"
+        reg  dry_run_job        "${{ inputs.dry_run_job }}"
+        reg  event_name         "${{ github.event_name }}"
+        reg  event_number       "${{ github.event.number }}"
+        reg  repository         "${{ github.repository }}"
+        reg  run_job            "${{ inputs.run_job }}"
+        reg  travis_file        "${{ inputs.file }}"
+        reg  travis_steps       "${{ inputs.steps }}"
+        reg  travis_steps       "${{ inputs.stages }}"
+        : [3/3] action
+        . "$GITHUB_ACTION_PATH/extra/plan/action.sh"

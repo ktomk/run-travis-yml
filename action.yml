@@ -1,6 +1,8 @@
 name: run .travis.yml
 author: Tom Klingenberg <https://github.com/ktomk>
-description: Run `.travis.yml` Stages/Scripts (Travis-CI) as Github Action (Github)
+description: |
+  Run `.travis.yml` build job Steps/Stages (Travis-CI) as Github
+  Action (Github).
 
 branding:
   color: yellow
@@ -40,6 +42,21 @@ inputs:
     default: ''
     required: false
 
+  run_job:
+    description: |
+      Name of the run-job. Possible values are the ones the
+      plan is listing. By default, the original root step-scripts
+      are in use. If a job has a name, it can be used as well.
+    default: ''
+    required: false
+
+  dry_run_job:
+    description: |
+      Dry-run the run-job. Possible values are `true` and
+      `false`.
+    default: ''
+    required: false
+
 outputs:
   test_result:
     description: |
@@ -71,13 +88,15 @@ runs:
       run: |
         : [1/3] action binding
         . "$GITHUB_ACTION_PATH"/lib/binding.sh
-        : [2/3] register action
+        : [2/3] register action context
         reg  allow_failure      "${{ inputs.allow_failure }}"
+        reg  dry_run_job        "${{ inputs.dry_run_job }}"
         reg  event_name         "${{ github.event_name }}"
         reg  event_number       "${{ github.event.number }}"
         reg  repository         "${{ github.repository }}"
+        reg  run_job            "${{ inputs.run_job }}"
         reg  travis_file        "${{ inputs.file }}"
         reg  travis_steps       "${{ inputs.steps }}"
         reg  travis_steps       "${{ inputs.stages }}"
         : [3/3] action
-        . "$GITHUB_ACTION_PATH"/lib/action.sh
+        . "$GITHUB_ACTION_PATH"/action.sh

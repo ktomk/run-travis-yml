@@ -5,10 +5,11 @@ on: [push, pull_request]
 jobs:
   test:
     name: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
 
     steps:
-      - {shell: bash,run: 'echo "$(whoami) on $(uname -a)"; echo "::group::sudo"; sudo -lU "$(whoami)"&&echo $?||echo $?; echo "::group::env"; set -o posix; set|sort'}
+      - {name: sys,shell: bash,run: 'echo "$(whoami) on $(uname -a)"; echo "::group::sudo"; sudo -lU "$(whoami)"&&echo $?||echo $?; echo "::group::env"; set -o posix; set|sort'}
+      - {name: php,shell: bash,run: 'printf "::group::"; php --version ; php -i|grep -i yaml||:; echo "::endgroup::"; printf "::group::"; php -i|grep ''\$_ENV\|\$_SERVER''||:; echo "::endgroup::"'}
       - uses: actions/checkout@v2
       - run: test/shell.sh
       - name: test action
@@ -16,12 +17,30 @@ jobs:
         with:
           file: test/.travis.yml
 
-      - name: test project .travis.yml action
+      - name: project .travis.yml action
         uses: ./.
         with:
           allow_failure: true
         env:
           TRAVIS_YAML_FILE: .travis.yml
+
+      - name: plan run action
+        uses: ./extra/plan
+      - name: plan run action - test/.travis.yml
+        uses: ./extra/plan
+        with:
+          run_job: root
+          file: test/.travis.yml
+
+      - name: plan run action - build-stages.travis.yml
+        uses: ./extra/plan
+        with:
+          file: test/file/build-stages.travis.yml
+
+      - name: plan run action - php-cs-fixer.travis.yml
+        uses: ./extra/plan
+        with:
+          file: test/file/php-cs-fixer.travis.yml
 
   error:
     name: allow failure
@@ -49,7 +68,7 @@ jobs:
       matrix:
         machine:
           - ubuntu-16.04
-          - ubuntu-18.04
+          # - ubuntu-18.04 # already covered by test job above
           - ubuntu-20.04
           - macos-10.15
           - macos-11.0
@@ -57,9 +76,27 @@ jobs:
         experimental: [false]
 
     steps:
-      - {shell: bash,run: 'echo "$(whoami) on $(uname -a)"; echo "::group::sudo"; sudo -lU "$(whoami)"&&echo $?||echo $?; echo "::group::env"; set -o posix; set|sort'}
+      - {name: sys,shell: bash,run: 'echo "$(whoami) on $(uname -a)"; echo "::group::sudo"; sudo -lU "$(whoami)"&&echo $?||echo $?; echo "::group::env"; set -o posix; set|sort'}
+      - {name: php,shell: bash,run: 'printf "::group::"; php --version ; php -i|grep -i yaml||:; echo "::endgroup::"; printf "::group::"; php -i|grep ''\$_ENV\|\$_SERVER''||:; echo "::endgroup::"'}
       - uses: actions/checkout@v2
       - name: run .travis.yml
         uses: ./.
         env:
           TRAVIS_ALLOW_FAILURE: true
+
+      - name: plan run action
+        uses: ./extra/plan
+      - name: plan run action - test/.travis.yml
+        uses: ./extra/plan
+        with:
+          file: test/.travis.yml
+
+      - name: plan run action - build-stages.travis.yml
+        uses: ./extra/plan
+        with:
+          file: test/file/build-stages.travis.yml
+
+      - name: plan run action - php-cs-fixer.travis.yml
+        uses: ./extra/plan
+        with:
+          file: test/file/php-cs-fixer.travis.yml

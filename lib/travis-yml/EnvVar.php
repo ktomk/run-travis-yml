@@ -46,8 +46,8 @@ class EnvVar
             if (!Node::isMap($map)) {
                 continue;
             }
-            foreach (self::exportMap($map) as $export) {
-                $exports[] = $export;
+            foreach (self::exportMap($map) as $var => $export) {
+                $exports[$var] = $export;
             }
         }
         return $exports;
@@ -58,7 +58,7 @@ class EnvVar
         $environ = array();
         foreach($map as $k => $v) {
             // quoting is inherited from yaml file ...
-            $environ[] = sprintf('%s=%s', $k, $v);
+            $environ[$k] = sprintf('%s=%s', $k, $v);
         }
         return $environ;
     }

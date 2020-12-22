@@ -23,6 +23,54 @@ class TravisYmlTest extends TestCase
         self::assertSame($expected, $actual, 'env map notation from string');
     }
 
+    public function testDefineRootJob()
+    {
+        $yml = TravisYml::normalizeYaml();
+        $yml['env'] = TravisYml::envDefinition(array('global' => 'FOO=BAR', 'jobs' => 'BAZ=QUX'));
+        $yml['install'] = 'bundle install --jobs=3 --retry=3';
+        $yml['script'] = 'rake';
+        $expected = array(
+            'language' => 'ruby',
+            'env' => array(array('FOO' => 'BAR')),
+            'name' => null,
+            'stage' => null,
+            'install' => $yml['install'],
+            'script' => $yml['script'],
+        );
+        self::assertSame($expected, TravisYml::defineRootJob($yml));
+
+        return TravisYml::defineRootJob($yml);
+    }
+
+    /**
+     * @param array $root
+     * @depends testDefineRootJob
+     */
+    public function testDefineMatrixJob(array $root)
+    {
+        $job = array();
+        $job['install'] = 'bundle install';
+        $job['env'] = array(array('STEP' => 'COOLDOWN'));
+        $job['name'] = 'test cooldown';
+        $expected = array(
+            'language' => 'ruby',
+            'env' => array(array('STEP' => 'COOLDOWN')),
+            'name' => $job['name'],
+            'stage' => null,
+            'install' => array($job['install']),
+        );
+        self::assertSame($expected, TravisYml::defineBuildJob($root, $job), 'without global env and root steps');
+
+        $expected['env'] = array(array('FOO' => 'BAR'), array('STEP' => 'COOLDOWN'));
+        self::assertSame($expected, TravisYml::defineBuildJob($root, $job, true), 'with global env');
+
+        $expected['script'] = $root['script'];
+        self::assertSame($expected, TravisYml::defineBuildJob($root, $job, true, true), 'with global env and root steps');
+
+        $expected['env'] = $job['env'];
+        self::assertSame($expected, TravisYml::defineBuildJob($root, $job, false, true), 'without global env and with root steps');
+    }
+
     public function testNormalizeBlank()
     {
         $expected = array();
@@ -36,10 +84,9 @@ class TravisYmlTest extends TestCase
     public function testNormalizeWithEnvGlobal()
     {
         $expected = array();
-        $expected['env'] = array('global' => array(array('FOO' => 'BAR')), 'jobs' => array());
-        $expected['env']['matrix'] = & $expected['env']['jobs'];
         /** @noinspection AdditionOperationOnArraysInspection */
         $expected += TravisYml::$defaultYml;
+        $expected['env'] = array('global' => array(array('FOO' => 'BAR')), 'jobs' => array());
         $expected['os'] = Node::normalizeSequence($expected['os']);
         $actual = TravisYml::normalizeYaml(array('env' => array('global' => 'FOO=BAR')));
         self::assertSame($expected, $actual);
@@ -48,10 +95,10 @@ class TravisYmlTest extends TestCase
     public function testNormalizeWithJobs()
     {
         $expected = array();
-        $expected['jobs'] = TravisYml::$defaultJobs;
-        $expected['jobs']['include'] = array(array('language' => 'php'));
         /** @noinspection AdditionOperationOnArraysInspection */
         $expected += TravisYml::$defaultYml;
+        $expected['jobs'] = TravisYml::$defaultJobs;
+        $expected['jobs']['include'] = array(array('language' => 'php', 'env' => array(), 'stage' => 'test'));
         $expected['os'] = Node::normalizeSequence($expected['os']);
         $actual = TravisYml::normalizeYaml(array('jobs' => array('language' => 'php')));
         self::assertSame($expected, $actual);
@@ -82,12 +129,7 @@ class TravisYmlTest extends TestCase
             ),
             'jobs' => array(),
         );
-        $expected['matrix'] = &$expected['jobs'];
         self::assertSame($expected, $actual, 'env');
-
-        $actual['matrix'][] = 'test';
-        $expected['jobs'][] = 'test';
-        self::assertSame($expected, $actual, 'aliasing');
     }
 
     public function testLanguage()
@@ -105,15 +147,22 @@ class TravisYmlTest extends TestCase
         $actual = $config->jobStepScripts();
         $expected = array(
             'include.1' => array(
+                'language' => 'ruby',
+                'env' => array(),
                 'stage' => 'test',
-                'script' => './test 1',
+                'script' => array('./test 1'),
             ),
             'include.2' => array(
-                'script' => './test 2',
+                'language' => 'ruby',
+                'env' => array(),
+                'stage' => 'test',
+                'script' => array('./test 2'),
             ),
             'include.3' => array(
+                'language' => 'ruby',
+                'env' => array(array('FOO' => 'BAZ')),
                 'stage' => 'deploy',
-                'script' => './deploy',
+                'script' => array('./deploy'),
             ),
         );
         self::assertSame($expected, $actual);
@@ -130,5 +179,12 @@ class TravisYmlTest extends TestCase
         self::assertIsArray($actual);
         $excerpt = array_intersect_key($actual, $expected);
         self::assertCount(count($expected), $excerpt);
+    }
+
+    public function testFmtBuildJobName()
+    {
+        $expected = '7.3 | With migration rules';
+        $actual = TravisYml::fmtBuildJobName('7.3 | with migration rules');
+        self::assertSame($expected, $actual);
     }
 }

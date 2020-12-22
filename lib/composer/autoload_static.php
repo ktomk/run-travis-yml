@@ -7,6 +7,10 @@ namespace Composer\Autoload;
 class ComposerStaticInitRunTravisYml
 {
     public static $prefixLengthsPsr4 = array (
+        'P' => 
+        array (
+            'Patchwork\\' => 10,
+        ),
         'K' => 
         array (
             'Ktomk\\TravisYml\\' => 16,
@@ -15,6 +19,10 @@ class ComposerStaticInitRunTravisYml
     );
 
     public static $prefixDirsPsr4 = array (
+        'Patchwork\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/patchwork/utf8/src/Patchwork',
+        ),
         'Ktomk\\TravisYml\\' => 
         array (
             0 => __DIR__ . '/..' . '/travis-yml',
@@ -37,6 +45,7 @@ class ComposerStaticInitRunTravisYml
 
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
+        'Normalizer' => __DIR__ . '/..' . '/patchwork/utf8/src/Normalizer.php',
     );
 
     public static function getInitializer(ClassLoader $loader)

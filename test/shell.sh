@@ -1,25 +1,29 @@
 #!/bin/sh
 set -ex
 
+####
+target_shellcheck() {
+  "${1:-shellcheck}" --version
+  "${1:-shellcheck}" lib/script/install.sh test/shell.sh
+  "${1:-shellcheck}" --shell=bash \
+      action.sh \
+      environment.sh \
+      lib/binding.sh \
+      extra/plan/action.sh \
+      ;
+}
+
 if command -v composer; then
   composer --version
   composer validate # does not catch that many misconfigurations w/ paths btw.
 fi
 
 if command -v shellcheck; then
-  shellcheck --version
-  shellcheck lib/script/install.sh
-  shellcheck --shell=bash lib/action.sh
-  shellcheck --shell=bash lib/binding.sh
-  shellcheck test/shell.sh
+  target_shellcheck shellcheck
 fi
 
 if command -v /usr/bin/shellcheck; then
-  /usr/bin/shellcheck --version
-  /usr/bin/shellcheck lib/script/install.sh
-  /usr/bin/shellcheck --shell=bash lib/action.sh
-  /usr/bin/shellcheck --shell=bash lib/binding.sh
-  /usr/bin/shellcheck test/shell.sh
+  target_shellcheck /usr/bin/shellcheck
 fi
 
 if command -v misspell; then
@@ -66,12 +70,23 @@ script" | grep -c '"hello world"')" -eq 3 # script executions
 ./test/action.sh 2>&1 >/dev/null
 
 : [7] standard action has exit status 1
-set +e
-# shellcheck disable=SC2069
-travis_file=.travis.yml ./test/action.sh >/dev/null
-result=$?
-set -e
-test $result -eq 1
+# shellcheck disable=SC2069,SC2015
+! travis_file=.travis.yml ./test/action.sh >/dev/null
 
 : [8] standard action must not fail with allow_failure
 travis_file=.travis.yml allow_failure=true ./test/action.sh >/dev/null
+
+: [9] standard action must not fail with dry_run_job
+travis_file=.travis.yml dry_run_job=true ./test/action.sh >/dev/null
+
+: [10 extra/plan action
+# shellcheck disable=SC2069
+action_yml=extra/plan/action.yml ./test/action.sh 2>&1 >/dev/null
+
+: [11 extra/plan action fails on invalid run_job
+# shellcheck disable=SC2069
+! action_yml=extra/plan/action.yml run_job=bogus ./test/action.sh 2>&1 >/dev/null
+
+: [12 extra/plan action run_job named jobs
+# shellcheck disable=SC2069
+action_yml=extra/plan/action.yml travis_file=test/file/n98-magerun.travis.yml run_job="Bash Autocompletion" ./test/action.sh 2>&1 >/dev/null

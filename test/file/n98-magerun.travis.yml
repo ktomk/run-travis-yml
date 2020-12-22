@@ -1,0 +1,50 @@
+language: php
+sudo: false
+
+services:
+  - mysql
+
+branches:
+  only:
+    - master
+    - develop
+    - /^(bugfix|feature|release)\/.*$/
+
+matrix:
+  fast_finish: true
+  include:
+    - name: SH lint
+      php: 7.2
+      env: SCRIPT_JOB=LINTSH
+      script: find {src,tests} -name "*.php" ! -path '*/String.php' -print0 | xargs
+        -0 -n1 -P8 php -l | grep -v '^No syntax errors detected'; test $? -eq 1
+
+    - name: buildsh
+      php: 7.2
+      env: SCRIPT_JOB="BUILDSH"
+
+    - name: Bash Autocompletion
+      php: 7.2
+      env: SCRIPT_JOB="BASH-AUTOCOMPLETION"
+
+    - name: Magento 1.9.4.5 PHP 7.2
+      php: 7.2
+      env: MAGENTO_VERSION="magento-mirror-1.9.4.5" DB=mysql INSTALL_SAMPLE_DATA=no
+
+    - name: OpenMage LTS 20.0.3 PHP 7.3
+      php: 7.3
+      env: MAGENTO_VERSION="openmage-20.0.3" DB=mysql INSTALL_SAMPLE_DATA=no
+
+before_install:
+  - phpenv config-rm xdebug.ini
+  - travis_retry composer self-update --1
+  - travis_retry composer global require hirak/prestissimo
+
+install:
+  - travis_retry composer install --prefer-dist --no-interaction --ignore-platform-reqs
+
+before_script:
+  - source build/travis/before_script.sh
+
+script:
+  - build/travis/script.sh

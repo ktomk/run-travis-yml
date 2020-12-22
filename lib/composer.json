@@ -4,11 +4,7 @@
     "vendor-dir": ".vendor"
   },
   "autoload": {
-    "psr-4": {
-      "Ktomk\\Pipelines\\": "ktomk/pipelines",
-      "Ktomk\\TravisYml\\": "travis-yml"
-    },
-    "psr-0": {"Symfony\\Component\\Yaml\\": ""}
+    "files": ["autoload.php"]
   },
   "require-dev": {
     "phpunit/phpunit": "^9.5"

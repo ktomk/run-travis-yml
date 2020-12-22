@@ -24,7 +24,12 @@
   },
   "require": {
     "php": "^5.3.3 || ^7.0 || ^8.0",
-    "ktomk/symfony-yaml": "~2.6.13"
+    "ktomk/symfony-yaml": "~2.6.13",
+    "patchwork/utf8": "~1.2"
+  }
+  ,
+  "require-dev": {
+    "roave/security-advisories": "dev-master"
   },
   "scripts": {
     "pre-install-cmd": ["lib/script/install.sh"],

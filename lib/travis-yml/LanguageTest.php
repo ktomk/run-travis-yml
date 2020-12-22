@@ -12,7 +12,9 @@ class LanguageTest extends TestCase
 {
     public function testMatrix()
     {
-        $lang = new Language(TravisYml::loadArray(), 'php');
-        self::assertSame(TravisYml::$languages['php']['matrix'], $lang->matrixKeys());
+        $lang = new Language('php');
+        $expected = Language::$languages['php']['matrix'];
+        $expected[] = 'env';
+        self::assertSame($expected, $lang->matrixKeys());
     }
 }

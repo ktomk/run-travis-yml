@@ -1,4 +1,6 @@
 <?php
+/** @noinspection PhpComposerExtensionStubsInspection */
+/** @noinspection PhpElementIsNotAvailableInCurrentPhpVersionInspection */
 
 /*
  * run-travis-yml
@@ -6,7 +8,10 @@
 
 namespace Ktomk\TravisYml;
 
+use IntlChar;
+use InvalidArgumentException;
 use Ktomk\Pipelines\Yaml\Yaml;
+use Patchwork\Utf8\Bootup;
 
 /**
  * the .travis.yml config
@@ -32,6 +37,8 @@ class TravisYml
         'allow_failures' => array(),
         'fast_finish' => false,
     );
+
+    public static $jobDimensions = array('include', 'exclude', 'allow_failures');
 
     /**
      * Job Lifecycle
@@ -64,8 +71,24 @@ class TravisYml
      * Default Supported ordered Lifecycle Steps
      *
      * @var string[]
+     * @see $allSteps
      */
     public static $customSteps = array('before_install', 'install', 'before_script', 'script', 'after_script');
+
+    /**
+     * All Supported ordered Lifecycle Steps
+     *
+     * These are the known and allowed ones for step input. Some of them are actually internal to travis-build
+     * and are not supported by the standard run. Maybe it helps to have them all in so that users can trigger
+     * them explicitly in case it fits their needs (e.g. after_success as they can always assume success until
+     * after_success / after_failure are actually supported) or trigger any of the deploy scripts by sheer will.
+     *
+     * <https://github.com/travis-ci/travis-build/blob/master/lib/travis/build/stages.rb>
+     *
+     * @var string[]
+     * @see $customSteps
+     */
+    public static $allSteps = array('before_install', 'install', 'before_script', 'script', 'before_cache', 'after_success', 'after_failure', 'after_script', 'before_deploy', 'after_deploy');
 
     /**
      * Os-es
@@ -76,55 +99,6 @@ class TravisYml
      * Arch-es
      */
     public static $arches = array('amd64', 'arm64', 'ppc64le', 's390x');
-
-    /**
-     * Languages
-     *
-     * @var array
-     */
-    public static $languages = array(
-        'android',
-        'c' => array(
-            'default' => array('install' => null, 'script' => '	./configure && make && make test'),
-            'matrix' => array('env', 'compiler'),
-        ),
-        'clojure',
-        'cpp',
-        'crystal',
-        'csharp',
-        'd',
-        'dart',
-        'elixir',
-        'elm',
-        'erlang',
-        'generic',
-        'go',
-        'groovy',
-        'hack',
-        'haskell',
-        'haxe',
-        'java',
-        'julia',
-        'nix',
-        'node_js',
-        'objective-c',
-        'perl',
-        'perl6',
-        'php' => array(
-            'default' => array('install' => null, 'script' => 'phpunit'),
-            'matrix' => array('env', 'php'),
-        ),
-        'python',
-        'r',
-        'ruby' => array(
-            'default' => array('install' => 'bundle install --jobs=3 --retry=3', 'script' => 'rake'),
-            'matrix' => array('env', 'rvm', 'gemfile', 'jdk'),
-        ),
-        'rust',
-        'scala',
-        'shell',
-        'smalltalk'
-    );
 
     /**
      * @var array
@@ -150,15 +124,16 @@ class TravisYml
         // the key 'matrix' is an alias for 'jobs', using 'jobs'
         $yml = Node::filterAliasMap($yml, array('matrix' => 'jobs'));
 
-        // step 1: defaults
-        /** @noinspection AdditionOperationOnArraysInspection */
-        $yml += self::$defaultYml;
+        // step 1: defaults (incl. putting them on top)
+        $yml = array_replace(self::$defaultYml, $yml);
+
         // step 2: normalize root nodes
         $yml['language'] = Node::normalizeString($yml['language']);
         $yml['os'] = Node::normalizeSequence($yml['os']);
         $yml['dist'] = Node::normalizeString($yml['dist']);
         isset($yml['env']) && $yml['env'] = self::envDefinition($yml['env']);
         isset($yml['jobs']) && $yml['jobs'] = self::jobsDefinition($yml['jobs']);
+        $yml = Node::copyNormalizeSequence($yml, self::$allSteps, $yml);
         return $yml;
     }
 
@@ -170,7 +145,7 @@ class TravisYml
     {
         $yml = Yaml::file($path);
         if (!is_array($yml)) {
-            throw new \InvalidArgumentException(sprintf("failed to parse file: '%s'", $path));
+            throw new InvalidArgumentException(sprintf("failed to parse file: '%s'", $path));
         }
         return $yml;
     }
@@ -188,11 +163,34 @@ class TravisYml
      */
     public static function filterSteps(array $steps)
     {
-        return Node::filterSequence($steps, self::$customSteps);
+        return Node::filterSequence($steps, self::$allSteps);
+    }
+
+    public static function fmtBuildStageName($stage)
+    {
+        self::initOnce();
+        return preg_replace_callback('(\\b(\\p{L&}))u', function($matches) {
+            return mb_strtoupper($matches[0], 'utf-8');
+        }, $stage, 1);
+    }
+
+    public static function fmtBuildJobName($name)
+    {
+        self::initOnce();
+        return preg_replace_callback('(\\b(\\p{L&}))u', function($matches) {
+            return mb_strtoupper($matches[0], 'utf-8');
+        }, $name, 1);
+    }
+
+    public static function initOnce()
+    {
+        static $once = 0;
+        $once++ || Bootup::initAll();
     }
 
     public function __construct(array $yml)
     {
+        self::initOnce();
         $this->yml = $yml;
     }
 
@@ -224,7 +222,6 @@ class TravisYml
             $defaultPrefix => array(),
         );
         $alias = array('matrix' => $defaultPrefix);
-        $env = Node::aliasMap($env, $alias);
         if (isset($node)) {
             $merge = Node::filterAliasMap($node, $alias);
             $merge = Node::normalizeMapEx($merge, $defaultPrefix, array_keys($env));
@@ -244,76 +241,206 @@ class TravisYml
             $merge = Node::filterAliasMap($node, $alias);
             $merge = Node::normalizeMapEx($merge, $defaultPrefix, array_keys($jobs));
             $jobs = Node::mergeMapWithAlias($jobs, $merge, $alias);
-            $jobs['exclude'] = Node::normalizeSequence($jobs['exclude']);
-            $jobs['allow_failures'] = Node::normalizeSequence($jobs['allow_failures']);
-            $jobs = Node::mergeMapWithAlias($jobs, $merge);
+            foreach (self::$jobDimensions as $prop) {
+                $jobs[$prop] = self::normalizeJobs($jobs[$prop]);
+            }
         }
         return $jobs;
     }
 
     /**
-     * jobs struct
-     *
-     * @return array|array[]
+     * @param array $node one or more job matrix entries
+     * @return array
      */
-    public function jobs()
+    public static function normalizeJobs($node)
     {
-        return self::jobsDefinition(Node::item($this->yml, array('jobs')));
+        $sequence = Node::normalizeSequence($node);
+        $stage = 'test';
+        if (!node::arrayIsSequence($sequence)) {
+            return $sequence;
+        }
+        foreach ($sequence as $i => $job) {
+            if (!Node::isMap($job)) {
+                continue; # not/broken job matrix entry
+            }
+            // env vars
+            $job += array('env' => array());
+            $job['env'] = EnvVar::normalize(Node::normalizeSequence($job['env']));
+            // stage name
+            $job['stage'] = $stage = trim(Node::item($job, 'stage', $stage)) ?: $stage;
+            // job name - optional, but if set should be string
+            if (isset($job['name'])) {
+                $job['name'] = trim($job['name']) ?: null;
+            }
+            $sequence[$i] = $job;
+        }
+        return $sequence;
     }
 
     /**
      * language from .travis.yml
+     *
+     * @deprecated use Language class instead
      */
     public function language()
     {
-        // just cautious: does not happen any longer since all incoming yml
-        // is normalized and language has a default.
-        if (!isset($this->yml['language'])) {
-            return new Language($this, 'unknown');
-        }
-
-        $lang = $this->yml['language'];
-        $defined = array_key_exists($lang, self::$languages);
-        $known = $defined || in_array($lang, self::$languages, true);
-
-        return new Language($this, $lang);
+        return new Language($this->yml['language']);
     }
 
-    /**
-     * @return array|string[] language names
-     */
-    public static function languages()
+    public static function defineRootJob(array $yml)
     {
-        $list = array();
-        foreach(self::$languages as $k => $v) {
-            $list[] = is_string($v) ? $v : $k;
-        }
-        return $list;
+        $root = array();
+        $root['language'] = $yml['language'];
+        # os -> string, deferred as currently no matrix based on os-es
+        # dist -> string, deferred as currently no matrix based on os-es
+        # arch -> same same
+        # osx_image -> same same
+        # sudo -> ?hmm same same?
+        $root['env'] = Node::item($yml, array('env', 'global'), array());
+        # compiler -> no support yet
+        $root['name'] = null; # the root job has no name
+        $root['stage'] = null; # the root job is not associated to any stage
+        $root = Node::copy($root, self::$allSteps, $yml);
+        return $root;
     }
 
     /**
-     * all job step scripts from file
+     * define matrix job based on $job inheriting from $root job
+     *
+     * @param array $root
+     * @param array $job
+     * @param bool $globalEnv
+     * @param bool $rootSteps
+     * @return array
+     */
+    public static function defineBuildJob(array $root, array $job, $globalEnv = false, $rootSteps = false)
+    {
+        $matrix = Node::copy(array('language' => null), array('language', 'env', 'name', 'stage'), $job);
+        $matrix['env'] = array();
+        $matrix = array_replace($matrix, $root);
+        $globalEnv || $matrix['env'] = array();
+        $rootSteps || $matrix = Node::remove($matrix, self::$allSteps);
+        $matrix = Node::copy($matrix, 'language', $job);
+        if (!isset($matrix['language'])) { unset($matrix['language']); }
+        $matrix = Node::append($matrix, 'env', $job);
+        $matrix = Node::copy($matrix, array('name', 'stage'), $job);
+        $matrix = Node::copyNormalizeSequence($matrix, self::$allSteps, $job);
+        // clean name if NULL (root job serves a place-holder)
+        if (!isset($matrix['name'])) {
+            unset($matrix['name']);
+        }
+        return $matrix;
+    }
+
+    /**
+     * @param string $key of run-job, empty string for the default run-job, if not a key, searches for name
+     * @return array job
+     */
+    public function runJob($key)
+    {
+        if ('' === $key) {
+            return $this->defaultRunJob();
+        }
+
+        $jobs = $this->jobStepScripts();
+        if (!isset($jobs[$key])) {
+            foreach ($jobs as $k => $v) {
+                if (!isset($v['name'])) {
+                    continue;
+                }
+                if (mb_strtolower($v['name'], 'utf-8') !== mb_strtolower($key)) {
+                    continue;
+                }
+                $key = $k;
+                break;
+            }
+        }
+
+        if (!isset($jobs[$key])) {
+            throw new InvalidArgumentException(sprintf('no such run-job: "%s"', $key));
+        }
+
+        $job = $jobs[$key];
+        if (!in_array($key, array('root', 'bare'), true)) {
+            $root = $this->defaultRunJob();
+            $job = self::defineBuildJob($root, $job, true, true);
+        }
+
+        return $job;
+    }
+
+    /**
+     * the original default run job
+     *
+     * that are the step scripts from root plus global env
+     * if available.
+     *
+     * @return array
+     */
+    public function defaultRunJob()
+    {
+        $jobs = $this->jobStepScripts();
+        if (isset($jobs['root'])) {
+            $job = $jobs['root'];
+        } else if (isset($jobs['bare'])) {
+            $job = $jobs['bare'];
+        } else {
+            $job  = array();
+        }
+
+        return $job;
+    }
+
+    /**
+     * all jobs from file of which step scripts could be executed (keyed)
+     *
+     * now with environment variables (global.env + job.env)
+     *
+     * @psalm-return array<string, array<string, string|array>>
+     * @return array[]
      */
     public function jobStepScripts()
     {
         $list = array();
+        $yml = $this->yml;
 
-        # at least one job is in file (the non-matrix matrix)
-        $bare = $this->bareCustomStepScripts();
-        $list['default'] = $bare;
-
-        # is there a matrix (normally langauge)
-        $language = $this->language();
-        $language->matrixKeys();
-        if (isset($this->yml[$language->name()])) {
-            $list['language'] = $bare;
+        # all steps bare from the root (not a real job), makes only sense if it contains any script
+        # this was the default until global env vars were supported (- v1.5.0)
+        $bare = Node::copy(array(), self::$allSteps, $yml);
+        $bareHasSteps = !empty($bare);
+        if ($bareHasSteps) {
+            $list['bare'] = $bare;
         }
 
-        # jobs.include
-        $jobs = $this->jobs();
-        foreach($jobs['include'] as $index => $include) {
-            $job = Node::mergeMapWithAlias($bare, $include);
-            $list['include.'.($index+1)] = $job;
+        # the root job (has default stage, step scripts from root, global.env)
+        # similar to the previous plan['default'] which ain't any longer, also the previous run
+        # this is the default since global env vars were supported (v1.5.0 - )
+        $root = self::defineRootJob($yml);
+        $globalEnv = !empty($root['env']);
+        if ($bareHasSteps && $globalEnv) {
+            $list['root'] = $root;
+        }
+
+        # matrix env vars (if set and there are at least one matrix/job env vars entry)
+        if ($bareHasSteps && isset($yml['env']['jobs'])) {
+            foreach ($yml['env']['jobs'] as $index => $envVars) {
+                $env = self::defineBuildJob($root, array('env' => array($envVars)));
+                $list['env.' . ($index + 1)] = $env;
+                unset($env);
+            }
+        }
+
+        # jobs' dimensions (include + exclude, allow_failures dropped)
+        foreach (array_diff(self::$jobDimensions, array('allow_failures')) as $dimension) {
+            if (!isset($yml['jobs'][$dimension])) {
+                continue;
+            }
+            $stage = 'test';
+            foreach ($yml['jobs'][$dimension] as $index => $jobMatrixEntry) {
+                $job = self::defineBuildJob($root, $jobMatrixEntry);
+                $stage = $job['stage'] = trim(Node::item($job, 'stage', $stage)) ?: $stage;
+                $list[$dimension . '.' . ($index + 1)] = $job;
+            }
         }
 
         return $list;
@@ -336,14 +463,6 @@ class TravisYml
      */
     public function getDocument()
     {
-        $yml = $this->yml;
-        // remove aliases (if not earlier)
-        unset(
-            $yml['matrix'], # jobs
-            $yml['env']['matrix'] # jobs
-        );
-        // move default keys to top
-        $yml = array_replace(self::$defaultYml, $yml);
-        return $yml;
+        return $this->yml;
     }
 }

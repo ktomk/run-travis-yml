@@ -1,4 +1,16 @@
 # run .travis.yml
+#
+# environment.sh - prepare TRAVIS_* environment
+#
+
+# add bin-shims first in path
+if ! hash phpenv 2>/dev/null; then
+  PATH="$GITHUB_ACTION_PATH/lib/bin-shims:$PATH"
+  export PATH
+fi
+# set shell to bash
+SHELL="${SHELL-$BASH}"
+export SHELL
 
 ### travis environment variables
 
@@ -28,11 +40,11 @@ gh_var TRAVIS_YAML_FILE                        '.travis.yml' travis_file
 # travis default environment variables (long lists following)
 #
 # link: <https://docs.travis-ci.com/user/environment-variables/#default-environment-variables>
-# file: travis-ci/travis-build/lib/travis/build/env/builtin.rb
+# link: <https://github.com/travis-ci/travis-build/blob/master/lib/travis/build/env/builtin.rb>
 #
 # excluded:
-#   TRAVIS_BUILD_STAGE_NAME (internal)
-#   TRAVIS_TEST_RESULT      (internal)
+#   TRAVIS_BUILD_STAGE_NAME (set by build.sh)
+#   TRAVIS_TEST_RESULT      (set by build.sh)
 gh_env \
 """
 TRAVIS
@@ -95,16 +107,3 @@ TRAVIS_XCODE_WORKSPACE
 
 TRAVIS_YAML_FILE
 """
-
-### write/run .travis.yml, process results and finish
-
-gh_parse
-gh_plan
-gh_build_run
-gh_allow_failure
-
-gh_export TRAVIS_ALLOW_FAILURE
-gh_export TRAVIS_TEST_RESULT
-gh_export TRAVIS_YAML_FILE
-
-gh_terminate # done.

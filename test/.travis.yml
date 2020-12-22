@@ -4,6 +4,9 @@ env:
   global:
     - FOO=BAR
     - BAZ=QUX
+  jobs:
+    - EXTRA=true KEEP=false
+    - EXTRA=special KEEP=true
 
 script:
   - echo "hello world"
