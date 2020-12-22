@@ -60,12 +60,13 @@ $label = function($text) {
     return sprintf("\033[34m%s%s\033[0m\033[34m%s\033[0m",
         "$punct$nbsp", $text,"$nbsp$punct");
 };
-$cmd = function($command, $fold, $foldName, $dryRun = false) use (&$assert, $raw, $head1, $label) {
+$cmd = function($command, $fold, $foldName, $dryRun = false, $doTiming = true) use (&$assert, $raw, $head1, $label) {
     $echo = '--echo';
     $args = array(
         $command,
         $assert ? '--assert' : null,
-        array(&$echo, '--timing'),
+        array(&$echo),
+        $doTiming ? '--timing' : null,
         $dryRun ? '--noexec' : null,
     );
     if ($fold) {
@@ -90,7 +91,7 @@ $envJob = function(array $job) use ($raw, $cmd) {
         if (false !== $val = getenv($var)) {
             $command = sprintf('# already set: %s=%s ; in .travis.yml: %s', $var, $val, $line);
         }
-        $cmd($command, false, '');
+        $cmd($command, false, '', false, false);
     }
     $raw("printf '\n'\n");
 };

@@ -3,8 +3,6 @@
 # binding.sh - source binding for action.yml action and environment scripts
 #
 
-TRAVIS_YAML_ERROR_COUNT=0
-
 #####
 # get eventname
 gh_eventname() {
@@ -195,24 +193,4 @@ gh_allow_failure() {
 gh_terminate() {
   gh_close_export
   exit $gh_build_result
-}
-
-####
-# message first error and fold afterwards
-gh_travis_result_error() {
-  local result type
-  result=$1
-  TRAVIS_YAML_ERROR_COUNT=$((TRAVIS_YAML_ERROR_COUNT + 1))
-  if [[ $TRAVIS_YAML_ERROR_COUNT -ne 1 ]]; then
-    return
-  fi
-
-  type="error"
-  if [[ "$TRAVIS_ALLOW_FAILURE" == "true" ]]; then
-    type="warning"
-  fi
-
-  printf '::%s file=%s::.travis.yml: The command %q exited with %s.\n' \
-      "$type" "$TRAVIS_YAML_FILE" "$TRAVIS_CMD" "$result"
-  printf '::group::\e[34m%s\e[0m\n' "after error continuation"
 }

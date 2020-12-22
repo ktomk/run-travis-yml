@@ -41,11 +41,7 @@ eval "$(sed -n '/: \[2\/3\]/,/: \[3\/3\]/ { s/"\(\${{ .* }}\)"/'\''\1'\''/g ; p 
 # : [3/3] action
 # for test, all internal environment parameters need to be exported to make the test exit safe in a subshell.
 eval "$(sed -n '/: \[2\/3\]/,/: \[3\/3\]/ s/^.* reg  \([^ ]\+\) .*$/export \1/p' "$action_yml")"
-# export from binding.sh for subshell
-export -f gh_travis_result_error
 (
-  # shellcheck disable=SC2034
-  TRAVIS_YAML_ERROR_COUNT=0
   . "$action_dir/action.sh"
 ) && result=$? || result=$?
 if [[ -f "$GITHUB_ENV" ]]; then echo "test-action: exported environment file:"; { ls -al -- "$GITHUB_ENV"; cat -- "$GITHUB_ENV"; } | sed 's/^/  /'; fi

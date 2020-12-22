@@ -20,7 +20,7 @@ jobs:
       - name: project .travis.yml action
         uses: ./.
         with:
-          allow_failure: true
+          allow-failure: true
         env:
           TRAVIS_YAML_FILE: .travis.yml
 
@@ -29,7 +29,7 @@ jobs:
       - name: plan run action - test/.travis.yml
         uses: ./extra/plan
         with:
-          run_job: root
+          run-job: root
           file: test/.travis.yml
 
       - name: plan run action - build-stages.travis.yml
@@ -44,18 +44,20 @@ jobs:
 
   error:
     name: allow failure
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     continue-on-error: true
     steps:
       - uses: actions/checkout@v2
       - id: self-error
         uses: ./.
         with:
-          allow_failure: true
+          allow-failure: true
 
       - if: ${{ success() }}
         shell: bash
-        run: test "${{ steps.self-error.outputs.outcome }}" = "failure"
+        run: |
+          test "${{ steps.self-error.outputs.outcome }}" = "failure"
+          test "${{ steps.self-error.outputs.test-result }}" = "1"
 
   try-machine:
     name: run on ${{ matrix.machine }}
@@ -68,7 +70,6 @@ jobs:
       matrix:
         machine:
           - ubuntu-16.04
-          # - ubuntu-18.04 # already covered by test job above
           - ubuntu-20.04
           - macos-10.15
           - macos-11.0

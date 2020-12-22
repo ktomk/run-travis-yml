@@ -10,6 +10,8 @@ ANSI_CLEAR="\033[0K"
 TRAVIS_TEST_RESULT=
 TRAVIS_CMD=
 
+TRAVIS_RNYML_ERROR_COUNT=0
+
 function travis_cmd() {
   local assert output outnp2 noexec display retry timing cmd result
 
@@ -69,11 +71,23 @@ travis_time_start() {
   #!!DEL!! echo -en "travis_time:start:$travis_timer_id\r${ANSI_CLEAR}"
 }
 
+####
+# message timing
+travis_rnyml_gh_timings() {
+  local dns="${1-0}"
+  local pms ps
+  pms=$((dns/1000000))
+  ps=$((pms/1000))
+  pms=$((pms-ps*1000))
+  printf '\e[90m[info]\e[0m \e[34m%d.%03d\e[0m s\n' $((ps)) $((pms))
+}
+
 travis_time_finish() {
   local result=$?
   travis_end_time=$(travis_nanoseconds)
   local duration=$(($travis_end_time-$travis_start_time))
   #!!DEL!! echo -en "travis_time:end:$travis_timer_id:start=$travis_start_time,finish=$travis_end_time,duration=$duration\r${ANSI_CLEAR}"
+  travis_rnyml_gh_timings "$duration"
   return $result
 }
 
@@ -99,6 +113,26 @@ travis_assert() {
   fi
 }
 
+####
+# message first error and fold afterwards
+travis_rnyml_gh_travis_result_error() {
+  local result type
+  result=$1
+  TRAVIS_RNYML_ERROR_COUNT=$((TRAVIS_RNYML_ERROR_COUNT + 1))
+  if [[ $TRAVIS_RNYML_ERROR_COUNT -ne 1 ]]; then
+    return
+  fi
+
+  type="error"
+  if [[ "$TRAVIS_ALLOW_FAILURE" == "true" ]]; then
+    type="warning"
+  fi
+
+  printf '::%s file=%s::.travis.yml: The command %q exited with %s.\n' \
+      "$type" "$TRAVIS_YAML_FILE" "$TRAVIS_CMD" "$result"
+  printf '::group::\e[34m%s\e[0m\n' "after error continuation"
+}
+
 travis_result() {
   local result=$1
   export TRAVIS_TEST_RESULT=$(( ${TRAVIS_TEST_RESULT:-0} | $(($result != 0)) ))
@@ -107,7 +141,7 @@ travis_result() {
     echo -e "\n${ANSI_GREEN}The command \"$TRAVIS_CMD\" exited with $result.${ANSI_RESET}"
   else
     echo -e "\n${ANSI_RED}The command \"$TRAVIS_CMD\" exited with $result.${ANSI_RESET}"
-    gh_travis_result_error "$result"
+    travis_rnyml_gh_travis_result_error "$result"
   fi
 }
 

@@ -76,17 +76,22 @@ script" | grep -c '"hello world"')" -eq 3 # script executions
 : [8] standard action must not fail with allow_failure
 travis_file=.travis.yml allow_failure=true ./test/action.sh >/dev/null
 
-: [9] standard action must not fail with dry_run_job
+: [9] standard action has error continuation
+travis_file=.travis.yml allow_failure=true ./test/action.sh \
+  | sed 's/\x1b\[[0-9;]*m//g' \
+  | grep '::group::after error continuation'
+
+: [10 standard action must not fail with dry_run_job
 travis_file=.travis.yml dry_run_job=true ./test/action.sh >/dev/null
 
-: [10 extra/plan action
+: [11 extra/plan action
 # shellcheck disable=SC2069
 action_yml=extra/plan/action.yml ./test/action.sh 2>&1 >/dev/null
 
-: [11 extra/plan action fails on invalid run_job
+: [12 extra/plan action fails on invalid run_job
 # shellcheck disable=SC2069
 ! action_yml=extra/plan/action.yml run_job=bogus ./test/action.sh 2>&1 >/dev/null
 
-: [12 extra/plan action run_job named jobs
+: [13 extra/plan action run_job named jobs
 # shellcheck disable=SC2069
 action_yml=extra/plan/action.yml travis_file=test/file/n98-magerun.travis.yml run_job="Bash Autocompletion" ./test/action.sh 2>&1 >/dev/null

@@ -29,8 +29,8 @@ This projects [`.travis.yml`](.travis.yml) [running as Github Action][example-ru
 [![Run of a .travis.yml in a Github Action](.github/assets/run-travis-yml.png)][example-run]
 
 <!-- FIXME(tk) stale link, gone after 90 days from 2020-12-13 due to log retention -->
-[example-run]: https://github.com/ktomk/run-travis-yml/runs/1545656525?check_suite_focus=true#step:4:1
-[example-env]: https://github.com/ktomk/run-travis-yml/runs/1545656525?check_suite_focus=true#step:4:6
+[example-run]: https://github.com/ktomk/run-travis-yml/runs/1596075825?check_suite_focus=true#step:5:1
+[example-env]: https://github.com/ktomk/run-travis-yml/runs/1596075825?check_suite_focus=true#step:5:6
 
 ## Usage
 
@@ -46,7 +46,7 @@ This projects [`.travis.yml`](.travis.yml) [running as Github Action][example-ru
       steps: |
         install
         script
-      allow_failure: false
+      allow-failure: false
     env:
       TRAVIS_PHP_VERSION: ${{ matrix.php-versions }}
 ```
@@ -56,26 +56,26 @@ This projects [`.travis.yml`](.travis.yml) [running as Github Action][example-ru
 * `steps` (optional) Steps to run as a space separated list (by default
   the following steps are run: `setup`, `before_install`, `install`,
   `before_script`, `script`, `after_script`, `before_deploy`).
-* `allow_failure` (optional) Allow failure set to `true` allows build
+* `allow-failure` (optional) Allow failure set to `true` allows build
   failures and to `false` to actually fail, which is the normal behaviour.
   This failure behaviour can also be controlled by the
   `TRAVIS_ALLOW_FAILURE` environment variable, the input overrides the
   environment variable when set. Double check cache and artifacts
-  configuration for side effects and see `outputs.test_result` and
+  configuration for side effects and see `outputs.test-result` and
   `outputs.outcome`.
-* `run_job` (optional) Name of the run-job. Possible values are the ones the
+* `run-job` (optional) Name of the run-job. Possible values are the ones the
   plan is listing. By default, the original root step-scripts are in use. If
   a job has a name, it can be used as well.
-* `dry_run_job` (optional) Dry-run the run-job. Possible values are `true`
+* `dry-run-job` (optional) Dry-run the run-job. Possible values are `true`
   and `false`.
 
 ### Outputs
-* `test_result` Outcome of `TRAVIS_TEST_RESULT`, either `0` if all commands
+* `test-result` Outcome of `TRAVIS_TEST_RESULT`, either `0` if all commands
    in the `script` section have exited with zero or `1` otherwise.
-* `conclusion` The result of the .travis.yml build after `allow_failure`
+* `conclusion` The result of the .travis.yml build after `allow-failure`
   / `TRAVIS_ALLOW_FAILURE` is applied. Possible values are `success` or
   `failure`.
-* `outcome` The result of the .travis.yml build before `allow_failure`
+* `outcome` The result of the .travis.yml build before `allow-failure`
   / `TRAVIS_ALLOW_FAILURE` is applied. Possible values are `success` or
   `failure`.
 
@@ -95,8 +95,8 @@ visible][example-env]:
 Currently, three environment variables are exported, so they are available
 for further job steps:
 
-* `TRAVIS_ALLOW_FAILURE` - see `inputs.allow_failure`, `outputs.test_result`
-* `TRAVIS_TEST_RESULT` - see `outputs.test_result`
+* `TRAVIS_ALLOW_FAILURE` - see `inputs.allow-failure`, `outputs.test-result`
+* `TRAVIS_TEST_RESULT` - see `outputs.test-result`
 * `TRAVIS_YAML_FILE` - see `inputs.file`
 
 This also allows to run the same file multiple times, e.g. different
@@ -120,13 +120,13 @@ stages step-by-step.
   is folded to keep it better visible within the Github log viewer.
 * Github has no allow-failure option when running action job steps. Luckily
   The ***Run .travis.yml Github Action*** has `TRAVIS_ALLOW_FAILURE`, see
-  `inputs.allow_failure` as well.
+  `inputs.allow-failure` as well.
 
 ### Supported / Not
 
 This action setups environment variables specified in the `.travis.yml` file
 and then runs *one* of the (potentially) many build jobs within the test
-build stage. Which job to run needs to be specified by the `run_job` input,
+build stage. Which job to run needs to be specified by the `run-job` input,
 it is not automatically selected (previous versions of the action did only
 run the bare job with no environment variable support). The *plan* shows
 all run-jobs in the `.travis-yml` file.
@@ -141,7 +141,7 @@ insofar that there are no default steps defined, e.g. `phpunit` as `script`
 for `language` `php` is not defined and if used on Travis-CI should be
 added to the `.travis.yml` file explicitly to just work.
 
-The deploy build stage is not specifically supported.
+The `deploy` build stage is not specifically supported.
 
 Maybe at this point it's better for orientation to write more clearly what
 this action does not. Most of these limitations are by design, the action
