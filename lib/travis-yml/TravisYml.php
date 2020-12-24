@@ -325,9 +325,11 @@ class TravisYml
         $matrix = Node::append($matrix, 'env', $job);
         $matrix = Node::copy($matrix, array('name', 'stage'), $job);
         $matrix = Node::copyNormalizeSequence($matrix, self::$allSteps, $job);
-        // clean name if NULL (root job serves a place-holder)
-        if (!isset($matrix['name'])) {
-            unset($matrix['name']);
+        // clean stage/name if NULL (root job serves a place-holder)
+        foreach (array('name', 'stage') as $key) {
+            if (!isset($matrix[$key])) {
+                unset($matrix[$key]);
+            }
         }
         return $matrix;
     }
