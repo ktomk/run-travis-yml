@@ -2,7 +2,6 @@
 branches:
   only: [ '/^0{8192}$/' ] # travis-ci must not build from this file
 
-
 install:
           #!/bin/bash
   - echo 'pip install $1 &'
@@ -14,8 +13,8 @@ install:
   - |
     echo 'docker run $1 &'
     echo 'pkg install $1 &'
-    echo 'apg-get install $1 &'
-    echo 'sudo apg-get install $1 &'
+    echo 'apt-get install $1 &'
+    echo 'sudo apt-get install $1 &'
   - echo 'steamcmd +app_update "$1" validate &'
   - echo 'git clone https://github.com/"$1"/"$1" &'
   - echo 'cd "$1"; ./configure; make; make install &'

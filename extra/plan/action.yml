@@ -69,11 +69,14 @@ inputs:
     required: false
 
 outputs:
-  test_result:
+  test-result:
     description: |
       Outcome of `TRAVIS_TEST_RESULT`, either `0` if all commands
       in the `script` section have exited with zero or `1`
       otherwise.
+    value: ${{ steps.travis-build-sh.outputs.exit-status }}
+  test_result:
+    description: alias of `test-result`
     value: ${{ steps.travis-build-sh.outputs.exit-status }}
 
   conclusion:

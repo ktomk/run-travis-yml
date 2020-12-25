@@ -17,9 +17,17 @@ export SHELL
 gh_var TRAVIS                                  true
 gh_var CI                                      true
 gh_var CONTINUOUS_INTEGRATION                  true
-gh_var PAGER                                   "cat"
+gh_var DEBIAN_FRONTEND                         noninteractive
 gh_var HAS_JOSH_K_SEAL_OF_APPROVAL             true
 gh_var HAS_ANTARES_THREE_LITTLE_FRONZIES_BADGE true  #  n/a in travis-build master; noted for soft-deprecation
+gh_var PAGER                                   "cat"
+gh_var LANG                                    "en_US.UTF-8"
+gh_var LC_ALL                                  "en_US.UTF-8"
+gh_var RAILS_ENV                               "test"
+gh_var RACK_ENV                                "test"
+gh_var MERB_ENV                                "test"
+gh_var JRUBY_OPTS                              "--server -Dcext.enabled=false -Xcompile.invokedynamic=false"
+
 gh_var TRAVIS_ALLOW_FAILURE                    false allow_failure
 gh_var TRAVIS_APP_HOST                         "$(hostname)"
 gh_var TRAVIS_BUILD_DIR                        "$GITHUB_WORKSPACE"
@@ -50,9 +58,20 @@ gh_env \
 TRAVIS
 CI
 CONTINUOUS_INTEGRATION
-PAGER
+DEBIAN_FRONTEND
 HAS_JOSH_K_SEAL_OF_APPROVAL
 HAS_ANTARES_THREE_LITTLE_FRONZIES_BADGE
+USER
+HOME
+PAGER
+LANG
+LC_ALL
+RAILS_ENV
+RACK_ENV
+MERB_ENV
+JRUBY_OPTS
+JAVA_HOME
+
 TRAVIS_ALLOW_FAILURE
 TRAVIS_APP_HOST
 TRAVIS_BRANCH

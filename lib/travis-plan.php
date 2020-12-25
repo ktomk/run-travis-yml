@@ -89,7 +89,7 @@ if (0 === $jobsCount) {
     $raw(" - " . implode("\n - ", $labels) . "\n");
 }
 
-$raw(sprintf("---\nrun-job: \"%s\"\n", $runJob));
+$raw(sprintf("---\nrun-job: \"%s\" ", $runJob));
 $job = Args::runJob($config, $runJob);
 $flag = function ($const = null, $flags = 0) {
     (null !== $const) && defined($const) && $flags |= constant($const);

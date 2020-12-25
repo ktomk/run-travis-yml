@@ -21,16 +21,33 @@ jobs:
         uses: ./.
         with:
           allow-failure: true
-        env:
-          TRAVIS_YAML_FILE: .travis.yml
+
+      - name: universal install script .travis.yml action
+        uses: ./.
+        with:
+          allow-failure: true
+          file: test/file/universal-install-script.travis.yml
 
       - name: plan run action
         uses: ./extra/plan
+        with:
+          file: test/file/universal-install-script.travis.yml
+
+      - name: plan run action (project default .travis.yml)
+        uses: ./extra/plan
+
       - name: plan run action - test/.travis.yml
         uses: ./extra/plan
         with:
           run-job: root
           file: test/.travis.yml
+
+      - name: plan run action - test/.travis.yml (by env.TRAVIS_YAML_FILE)
+        uses: ./extra/plan
+        with:
+          run-job: root
+        env:
+          TRAVIS_YAML_FILE: test/.travis.yml
 
       - name: plan run action - build-stages.travis.yml
         uses: ./extra/plan
@@ -87,6 +104,9 @@ jobs:
 
       - name: plan run action
         uses: ./extra/plan
+        with:
+          file: test/file/universal-install-script.travis.yml
+
       - name: plan run action - test/.travis.yml
         uses: ./extra/plan
         with:

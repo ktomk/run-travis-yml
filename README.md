@@ -1,6 +1,7 @@
 # Run .travis.yml Github Action
 
 [![CI Status][badge.svg]](https://github.com/ktomk/run-travis-yml/actions)
+[![GitHub Marketplace][ghmp-badge.svg]](https://github.com/marketplace/actions/run-travis-yml)
 
 For the [pipelines project][p] there was need to migrate from travis-ci.org
 to travis-ci.com (as travis-ci.org is shutting down).
@@ -29,8 +30,8 @@ This projects [`.travis.yml`](.travis.yml) [running as Github Action][example-ru
 [![Run of a .travis.yml in a Github Action](.github/assets/run-travis-yml.png)][example-run]
 
 <!-- FIXME(tk) stale link, gone after 90 days from 2020-12-13 due to log retention -->
-[example-run]: https://github.com/ktomk/run-travis-yml/runs/1596075825?check_suite_focus=true#step:5:1
-[example-env]: https://github.com/ktomk/run-travis-yml/runs/1596075825?check_suite_focus=true#step:5:6
+[example-run]: https://github.com/ktomk/run-travis-yml/runs/1607265666?check_suite_focus=true#step:5:1
+[example-env]: https://github.com/ktomk/run-travis-yml/runs/1607265666?check_suite_focus=true#step:5:6
 
 ## Usage
 
@@ -118,6 +119,9 @@ stages step-by-step.
 * First error in script is annotated. If `TRAVIS_ALLOW_FAILURE` is `true`
   the annotation is a warning, not an error. Further, following output
   is folded to keep it better visible within the Github log viewer.
+* Run the `extra/plan` sub-action first to show the whole plan (incl.
+  selected `run-job`), and a dry-run preview of the actionable `.travis.yml`
+  run. Fast and lightweight to step into migrating to Github Actions.
 * Github has no allow-failure option when running action job steps. Luckily
   The ***Run .travis.yml Github Action*** has `TRAVIS_ALLOW_FAILURE`, see
   `inputs.allow-failure` as well.
@@ -205,4 +209,5 @@ its current form could do.
 [at-399]: https://github.com/actions/toolkit/issues/399
 [badge.svg]: https://github.com/ktomk/run-travis-yml/workflows/CI/badge.svg
 [coe]: https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#jobsjob_idcontinue-on-error
+[ghmp-badge.svg]: https://img.shields.io/badge/Marketplace-v1-undefined.svg?logo=github&labelColor=343B42&logoColor=959DA5&style=flat
 [p]: https://github.com/ktomk/pipelines
