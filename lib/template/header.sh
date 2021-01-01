@@ -75,11 +75,17 @@ travis_time_start() {
 # message timing
 travis_rnyml_gh_timings() {
   local dns="${1-0}"
-  local pms ps
+  local pms ps total_duration tpms tps
   pms=$((dns/1000000))
   ps=$((pms/1000))
   pms=$((pms-ps*1000))
-  printf '\e[90m[info]\e[0m \e[34m%d.%03d\e[0m s\n' $((ps)) $((pms))
+
+  total_duration=$((travis_end_time - TRAVIS_RNYML_START_TIME))
+  tpms=$((total_duration/1000000))
+  tps=$((tpms/1000))
+  tpms=$((tpms-tps*1000))
+
+  printf '\e[90m[info]\e[0m \e[34m%d.%03d\e[0m s / \e[34m%d.%03d\e[0m total\n' $((ps)) $((pms)) $((tps)) $((tpms))
 }
 
 travis_time_finish() {
@@ -246,6 +252,8 @@ travis_fold() {
 decrypt() {
   echo $1 | base64 -d | openssl rsautl -decrypt -inkey ~/.ssh/id_rsa.repo
 }
+
+TRAVIS_RNYML_START_TIME=$(travis_nanoseconds)
 
 #!!DEL!! mkdir -p <%= BUILD_DIR %>
 #!!DEL!! cd       <%= BUILD_DIR %>
