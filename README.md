@@ -113,7 +113,7 @@ stages step-by-step.
   caching). Helps to do an actual migration, e.g. reducing matrix on Travis
   first to get build minutes down, the matrix on Github is not affected by
   that.
-* Folding supported, Github just has no such nice labels thought.
+* [Output folding] supported.  Github doesn't have such nice labels, though.
 * Similar on Github the timing information is not as nice as the
   one on Travis-CI.
 * First error in script is annotated. If `TRAVIS_ALLOW_FAILURE` is `true`
@@ -211,3 +211,4 @@ its current form could do.
 [coe]: https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#jobsjob_idcontinue-on-error
 [ghmp-badge.svg]: https://img.shields.io/badge/Marketplace-v1-undefined.svg?logo=github&labelColor=343B42&logoColor=959DA5&style=flat
 [p]: https://github.com/ktomk/pipelines
+[Output folding]: https://www.koszek.com/blog/2016/07/25/dealing-with-large-jobs-on-travis/#output-folding
