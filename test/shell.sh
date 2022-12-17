@@ -1,4 +1,9 @@
 #!/bin/sh
+
+COMPOSER_CMD="${COMPOSER_CMD:-composer}"
+GITHUB_OUTPUT="${GITHUB_OUTPUT:-GITHUB_OUTPUT.cache}"
+export GITHUB_OUTPUT
+
 set -ex
 
 ####
@@ -14,8 +19,8 @@ target_shellcheck() {
 }
 
 if command -v composer; then
-  composer --version
-  composer validate # does not catch that many misconfigurations w/ paths btw.
+  $COMPOSER_CMD --version
+  $COMPOSER_CMD validate # does not catch that many misconfigurations w/ paths btw.
 fi
 
 if command -v shellcheck; then

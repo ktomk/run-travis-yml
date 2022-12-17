@@ -5,12 +5,12 @@ on: [push, pull_request]
 jobs:
   test:
     name: test
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
       - {name: sys,shell: bash,run: 'echo "$(whoami) on $(uname -a)"; echo "::group::sudo"; sudo -lU "$(whoami)"&&echo $?||echo $?; echo "::group::env"; set -o posix; set|sort'}
       - {name: php,shell: bash,run: 'printf "::group::"; php --version ; php -i|grep -i yaml||:; echo "::endgroup::"; printf "::group::"; php -i|grep ''\$_ENV\|\$_SERVER''||:; echo "::endgroup::"'}
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: test/shell.sh
       - name: test action
         uses: ./.
@@ -61,10 +61,10 @@ jobs:
 
   error:
     name: allow failure
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - id: self-error
         uses: ./.
         with:
@@ -86,17 +86,18 @@ jobs:
       fail-fast: false
       matrix:
         machine:
-          - ubuntu-16.04
           - ubuntu-20.04
-          - macos-10.15
-          - macos-11.0
+          - ubuntu-22.04
+          - macos-11
+          - macos-12
           - windows-2019
+          - windows-2022
         experimental: [false]
 
     steps:
       - {name: sys,shell: bash,run: 'echo "$(whoami) on $(uname -a)"; echo "::group::sudo"; sudo -lU "$(whoami)"&&echo $?||echo $?; echo "::group::env"; set -o posix; set|sort'}
       - {name: php,shell: bash,run: 'printf "::group::"; php --version ; php -i|grep -i yaml||:; echo "::endgroup::"; printf "::group::"; php -i|grep ''\$_ENV\|\$_SERVER''||:; echo "::endgroup::"'}
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: run .travis.yml
         uses: ./.
         env:

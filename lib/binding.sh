@@ -173,8 +173,10 @@ gh_build_run() {
   set -e
   export TRAVIS_TEST_RESULT=$gh_build_result
   # action output
-  printf '::set-output name=%s::%s\n' "exit-status" "$gh_build_result"
-  printf '::set-output name=%s::%s\n' "outcome" "$(gh_fmt_build_result "$gh_build_result")"
+  printf '%s=%s\n' "exit-status" "$gh_build_result" \
+    >> "$GITHUB_OUTPUT"
+  printf '%s=%s\n' "outcome" "$(gh_fmt_build_result "$gh_build_result")" \
+    >> "$GITHUB_OUTPUT"
 }
 
 #####
@@ -185,7 +187,8 @@ gh_allow_failure() {
     export gh_build_result=0 # silent
   fi
   # action output
-  printf '::set-output name=%s::%s\n' "conclusion" "$(gh_fmt_build_result "$gh_build_result")"
+  printf '%s=%s\n' "conclusion" "$(gh_fmt_build_result "$gh_build_result")" \
+    >> "$GITHUB_OUTPUT"
 }
 
 #####
