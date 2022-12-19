@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Yaml;
+namespace Ktomk\Symfony\Component\Yaml;
 
 /**
  * Dumper dumps PHP variables to YAML strings.

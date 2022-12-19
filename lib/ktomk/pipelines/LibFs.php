@@ -104,18 +104,43 @@ class LibFs
      */
     public static function mkDir($path, $mode = 0777)
     {
-        if (!is_dir($path)) {
-            /** @noinspection NestedPositiveIfStatementsInspection */
-            if (!mkdir($path, $mode, true) && !is_dir($path)) {
+        if (!is_dir($path) && !mkdir($path, $mode, true) && !is_dir($path)) {
+            // @codeCoverageIgnoreStart
+            throw new \RuntimeException(
+                sprintf('Directory "%s" was not created', $path)
+            );
+            // @codeCoverageIgnoreEnd
+        }
+
+        return $path;
+    }
+
+    /**
+     * create symbolic link to a directory with parents
+     *
+     * do not create if link pathname is already a
+     * directory or targeting one (even if not the target).
+     *
+     * create parent directory/ies of link if necessary.
+     *
+     * @param string $target pathname of target directory
+     * @param string $link pathname of link
+     *
+     * @return void
+     */
+    public static function symlinkWithParents($target, $link)
+    {
+        self::mkDir(dirname($link));
+        if (!is_dir($link)) {
+            self::symlink($target, $link);
+            if (!is_link($link)) {
                 // @codeCoverageIgnoreStart
                 throw new \RuntimeException(
-                    sprintf('Directory "%s" was not created', $path)
+                    sprintf('Link "%s" was not created', $link)
                 );
                 // @codeCoverageIgnoreEnd
             }
         }
-
-        return $path;
     }
 
     /**
@@ -172,10 +197,11 @@ class LibFs
             if (false === $result) {
                 throw new UnexpectedValueException(sprintf('Failed to open directory: %s', $current));
             }
-            $files = array_diff($result, array('.', '..'));
-            foreach ($files as $file) {
+            foreach (array_diff($result, array('.', '..')) as $file) {
                 $path = "${current}/${file}";
-                if (is_dir($path)) {
+                if (is_link($path)) {
+                    self::unlink($path);
+                } elseif (is_dir($path)) {
                     $stack[] = $path;
                 } elseif (is_file($path)) {
                     self::rm($path);

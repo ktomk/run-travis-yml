@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Yaml;
+namespace Ktomk\Symfony\Component\Yaml;
 
 /**
  * Unescaper encapsulates unescaping rules for single and double-quoted

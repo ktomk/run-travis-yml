@@ -19,16 +19,16 @@ class Yaml
     /**
      * @param string $file
      *
+     * @throws ParseException
      * @throws \InvalidArgumentException
      *
-     * @return null|array on error
+     * @return null|array
      */
     public static function file($file)
     {
         $path = '-' === $file ? 'php://stdin' : $file;
 
-        /* @link https://bugs.php.net/bug.php?id=53465 */
-        $path = preg_replace('(^/(?:proc/self|dev)/(fd/\d+))', 'php://\1', $path);
+        $path = LibFsStream::fdToPhp($path);
 
         if (!LibFsStream::isReadable($path)) {
             throw new \InvalidArgumentException(
@@ -40,13 +40,49 @@ class Yaml
     }
 
     /**
+     * @param string $file
+     *
+     * @throws \InvalidArgumentException
+     *
+     * @return null|array
+     */
+    public static function tryFile($file)
+    {
+        try {
+            return self::file($file);
+        } catch (ParseException $ex) {
+            return null;
+        }
+    }
+
+    /**
+     * error-free (suppressed) file_get_contents()
+     *
+     * available for implementations aligned with {@see Yaml::file()}
+     * that already checks readability before getting the contents.
+     *
+     * fall-back on file-reading error is null.
+     *
+     * @param string $path
+     * @param callable $parseBuffer function(string $buffer): array|null
+     *
+     * @return null|array
+     */
+    public static function fileDelegate($path, $parseBuffer)
+    {
+        $buffer = @file_get_contents($path);
+
+        return false === $buffer ? null : call_user_func($parseBuffer, $buffer);
+    }
+
+    /**
      * @param string $buffer
      *
      * @return null|array
      */
     public static function buffer($buffer)
     {
-        return self::parser()->parseBuffer($buffer);
+        return self::parser()->tryParseBuffer($buffer);
     }
 
     /**

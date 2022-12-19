@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Yaml;
+namespace Ktomk\Symfony\Component\Yaml;
 
-use Symfony\Component\Yaml\Exception\ParseException;
-use Symfony\Component\Yaml\Exception\DumpException;
+use Ktomk\Symfony\Component\Yaml\Exception\ParseException;
+use Ktomk\Symfony\Component\Yaml\Exception\DumpException;
 
 /**
  * Inline implements a YAML parser/dumper for the YAML inline syntax.
@@ -45,6 +45,10 @@ class Inline
         self::$exceptionOnInvalidType = $exceptionOnInvalidType;
         self::$objectSupport = $objectSupport;
         self::$objectForMap = $objectForMap;
+
+        if (null === $value) {
+            return '';
+        }
 
         $value = trim($value);
 

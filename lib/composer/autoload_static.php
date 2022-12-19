@@ -7,43 +7,38 @@ namespace Composer\Autoload;
 class ComposerStaticInitRunTravisYml
 {
     public static $prefixLengthsPsr4 = array (
-        'P' => 
+        'P' =>
         array (
             'Patchwork\\' => 10,
         ),
-        'K' => 
+        'K' =>
         array (
             'Ktomk\\TravisYml\\' => 16,
+            'Ktomk\\Symfony\\Component\\Yaml\\' => 29,
             'Ktomk\\Pipelines\\' => 16,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'Patchwork\\' => 
+        'Patchwork\\' =>
         array (
             0 => __DIR__ . '/..' . '/patchwork/utf8/src/Patchwork',
         ),
-        'Ktomk\\TravisYml\\' => 
+        'Ktomk\\TravisYml\\' =>
         array (
             0 => __DIR__ . '/..' . '/travis-yml',
         ),
-        'Ktomk\\Pipelines\\' => 
+        'Ktomk\\Symfony\\Component\\Yaml\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/ktomk/symfony-yaml',
+        ),
+        'Ktomk\\Pipelines\\' =>
         array (
             0 => __DIR__ . '/..' . '/ktomk/pipelines',
         ),
     );
 
-    public static $prefixesPsr0 = array (
-        'S' => 
-        array (
-            'Symfony\\Component\\Yaml\\' => 
-            array (
-                0 => __DIR__ . '/..' . '/ktomk/symfony-yaml',
-            ),
-        ),
-    );
-
-    public static $classMap = array (
+    public static $classMap = array(
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'Normalizer' => __DIR__ . '/..' . '/patchwork/utf8/src/Normalizer.php',
     );
@@ -53,7 +48,6 @@ class ComposerStaticInitRunTravisYml
         return \Closure::bind(function () use ($loader) {
             $loader->prefixLengthsPsr4 = ComposerStaticInitRunTravisYml::$prefixLengthsPsr4;
             $loader->prefixDirsPsr4 = ComposerStaticInitRunTravisYml::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInitRunTravisYml::$prefixesPsr0;
             $loader->classMap = ComposerStaticInitRunTravisYml::$classMap;
 
         }, null, ClassLoader::class);

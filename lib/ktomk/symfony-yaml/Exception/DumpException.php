@@ -9,15 +9,15 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Yaml\Exception;
+namespace Ktomk\Symfony\Component\Yaml\Exception;
 
 /**
- * Exception interface for all exceptions thrown by the component.
+ * Exception class thrown when an error occurs during dumping.
  *
  * @author Fabien Potencier <fabien@symfony.com>
  *
  * @api
  */
-interface ExceptionInterface
+class DumpException extends RuntimeException
 {
 }

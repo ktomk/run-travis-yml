@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Yaml;
+namespace Ktomk\Symfony\Component\Yaml;
 
-use Symfony\Component\Yaml\Exception\ParseException;
+use Ktomk\Symfony\Component\Yaml\Exception\ParseException;
 
 /**
  * Parser parses YAML strings to convert them to PHP arrays.

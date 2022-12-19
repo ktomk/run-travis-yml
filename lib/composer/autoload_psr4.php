@@ -8,5 +8,6 @@ $baseDir = dirname($vendorDir);
 return array(
     'Patchwork\\' => array($vendorDir . '/patchwork/utf8/src/Patchwork'),
     'Ktomk\\TravisYml\\' => array($vendorDir . '/travis-yml'),
+    'Ktomk\\Symfony\\Component\\Yaml\\' => array($vendorDir . '/ktomk/symfony-yaml'),
     'Ktomk\\Pipelines\\' => array($vendorDir . '/ktomk/pipelines'),
 );
