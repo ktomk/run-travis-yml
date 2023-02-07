@@ -24,4 +24,3 @@ script:
   - echo 'https://xkcd.com/1654/'
   - ls -la nonexistent
   - echo 'hello world'
-
